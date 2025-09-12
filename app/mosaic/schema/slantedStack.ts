@@ -1,0 +1,80 @@
+import type { LayoutSchema } from '@/app/mosaic/types'
+
+/** 斜分割边横向堆叠布局 */
+export const slantedStack: LayoutSchema = {
+  canvasWidth: 600,
+  canvasHeight: 600,
+  spacing: 2,
+  padding: 2,
+  spacingRange: [0, 6],
+  paddingRange: [0, 6],
+  elements: [
+    {
+      id: '1',
+      x: '0%',
+      y: '0%',
+      width: '33.333%',
+      height: '100%',
+      zIndex: 1,
+      fit: 'cover',
+      origin: { x: '0%', y: '50%' },
+      spacingDirection: 'horizontal',
+      mask: {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [
+          { x: '0%', y: '0%' },
+          { x: '85%', y: '0%' },
+          { x: '100%', y: '50%' },
+          { x: '85%', y: '100%' },
+          { x: '0%', y: '100%' },
+        ],
+      },
+    },
+    {
+      id: '2',
+      x: '33.333%',
+      y: '0%',
+      width: '33.333%',
+      height: '100%',
+      zIndex: 2,
+      fit: 'cover',
+      origin: { x: '50%', y: '50%' },
+      spacingDirection: 'horizontal',
+      mask: {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [
+          { x: '15%', y: '0%' },
+          { x: '85%', y: '0%' },
+          { x: '100%', y: '50%' },
+          { x: '85%', y: '100%' },
+          { x: '15%', y: '100%' },
+          { x: '0%', y: '50%' },
+        ],
+      },
+    },
+    {
+      id: '3',
+      x: '66.666%',
+      y: '0%',
+      width: '33.334%',
+      height: '100%',
+      zIndex: 1,
+      fit: 'cover',
+      origin: { x: '100%', y: '100%' },
+      spacingDirection: 'horizontal',
+      mask: {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [
+          { x: '15%', y: '0%' },
+          { x: '100%', y: '0%' },
+          { x: '100%', y: '100%' },
+          { x: '15%', y: '100%' },
+          { x: '0%', y: '50%' },
+        ],
+      },
+    },
+  ],
+}
