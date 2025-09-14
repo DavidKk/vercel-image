@@ -1,30 +1,89 @@
-import Meta, { generate } from '@/components/Meta'
+import { Suspense } from 'react'
 import Link from 'next/link'
-
-const { generateMetadata, metaProps } = generate({
-  title: 'Image Processing Tools',
-  description: 'A collection of online image processing tools including image merger with multiple layout options',
-})
-
-export { generateMetadata }
+import { MosaicShowcase } from '@/app/mosaic/components/MosaicShowcase'
+import { Spinner } from '@/components/Spinner'
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center p-10 pt-20 max-w-4xl mx-auto text-center">
-      <Meta {...metaProps} />
+    <div className="min-h-[calc(100vh-124px)] bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 flex flex-col">
+      {/* Main Content - Banner */}
+      <div className="flex flex-1 justify-center items-center max-w-5xl mx-auto w-full">
+        <div className="flex flex-col items-stretch lg:flex-row p-4 gap-6 w-full">
+          {/* Left Content - Description and CTA */}
+          <div className="lg:w-2/5 flex flex-col justify-center">
+            <div className="bg-white/20 backdrop-blur-lg rounded-xl p-6 shadow-lg border border-white/50">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">Image Processing Toolkit</h1>
+              <p className="text-gray-700 mb-5">Process images online without uploading to servers. Combine multiple images to create beautiful layout designs.</p>
 
-      <div className="mt-10 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-3">Image Merger</h2>
-            <p className="text-gray-600 mb-4">Combine multiple images into various layouts including grid, vertical stack, horizontal stack, and slanted stack layouts</p>
-            <Link href="/mosaic" className="text-blue-500 hover:text-blue-700 font-medium">
-              Try Image Merger →
-            </Link>
+              {/* Features */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="font-semibold text-gray-800">Privacy First</h3>
+                    <p className="text-gray-700 text-sm">All processing happens in your browser. Your images never leave your device.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="font-semibold text-gray-800">Multiple Layouts</h3>
+                    <p className="text-gray-700 text-sm">Create stunning designs with various layout options for your image collections.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="font-semibold text-gray-800">High Quality Output</h3>
+                    <p className="text-gray-700 text-sm">Generate high-resolution images up to 1024x1024 pixels for professional use.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="flex-shrink-0 mt-1">
+                    <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="font-semibold text-gray-800">Easy to Use</h3>
+                    <p className="text-gray-700 text-sm">Intuitive interface that makes creating beautiful image layouts effortless.</p>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href="/mosaic"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300 text-center text-sm shadow-md hover:shadow-lg transform hover:-translate-y-0.5 inline-block w-full"
+              >
+                Try Mosaic Now
+              </Link>
+            </div>
           </div>
-          <div className="p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-3">More Tools Coming Soon</h2>
-            <p className="text-gray-600">We're constantly adding new image processing capabilities. Check back regularly for updates!</p>
+
+          {/* Right Content - Showcase */}
+          <div className="lg:w-3/5 w-full flex flex-1">
+            <div className="w-full rounded-xl p-3 bg-white/20 backdrop-blur-lg shadow-lg border border-white/50 flex justify-center items-center">
+              <div className="aspect-square p-10 w-full rounded-lg overflow-hidden">
+                <Suspense
+                  fallback={
+                    <div className="aspect-square w-full bg-white/20 rounded-lg flex items-center justify-center">
+                      <div className="text-gray-600 text-sm">
+                        <Spinner />
+                      </div>
+                    </div>
+                  }
+                >
+                  <MosaicShowcase />
+                </Suspense>
+              </div>
+            </div>
           </div>
         </div>
       </div>

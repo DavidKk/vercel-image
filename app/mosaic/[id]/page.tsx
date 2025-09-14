@@ -27,7 +27,8 @@ export default async function LayoutEditPage({ params }: LayoutEditPageProps) {
   }
 
   return (
-    <div className="flex flex-col items-center p-10 pt-20 max-w-4xl mx-auto text-center">
+    // 修改容器类以支持响应式设计
+    <div className="flex flex-col items-center p-4 md:p-10 pt-4 md:pt-20 w-full max-w-4xl mx-auto text-center">
       <div className="space-y-6 w-full">
         <h1 className="text-2xl font-bold">Image Merger Tool - {id}</h1>
         <p className="text-gray-600">Edit your image layout</p>

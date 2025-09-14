@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { cloneSchema, adjustSchemaForSpacing, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
 import type { ImageElement, LayoutSchema, MediaObject, MediaType } from '@/app/mosaic/types'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
@@ -20,16 +20,74 @@ export interface MediaTarget {
 }
 
 export function useMediaPreview(props: UseMediaPreviewOptions) {
-  const { schema, mediaItems, setMediaItems, spacing = schema?.spacing, padding = schema?.padding, canvasWidth = 600, canvasHeight = 600 } = props
+  const { schema, mediaItems, setMediaItems, spacing = schema?.spacing, padding = schema?.padding, canvasWidth, canvasHeight } = props
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const mediaTargetsRef = useRef<Record<string, MediaTarget>>({})
+  // 添加一个加载状态的记录，避免重复加载相同的资源
+  const loadingPromisesRef = useRef<Record<string, Promise<HTMLImageElement | HTMLVideoElement> | undefined>>({})
   const { add: addRaf, clear: clearRafs } = useRafController()
+
+  // 添加状态来跟踪容器宽度
+  const [containerWidth, setContainerWidth] = useState(600)
+
+  // 计算响应式 Canvas 尺寸
+  const getResponsiveCanvasSize = useCallback(() => {
+    // 如果传入了 canvasWidth 和 canvasHeight，则使用传入的值
+    if (canvasWidth && canvasHeight) {
+      return { width: canvasWidth, height: canvasHeight }
+    }
+
+    // 否则使用响应式尺寸，但根据 schema 的宽高比进行调整
+    if (typeof window !== 'undefined') {
+      const screenWidth = window.innerWidth
+      let width = 0
+
+      if (screenWidth < 768) {
+        // 移动端
+        width = Math.min(screenWidth - 32, 400) // 减去左右 padding
+      } else if (screenWidth < 1024) {
+        // 平板
+        width = 500
+      } else {
+        // 桌面端
+        width = 600
+      }
+
+      // 根据 schema 的宽高比计算高度
+      if (schema) {
+        const aspectRatio = schema.canvasHeight / schema.canvasWidth
+        const height = width * aspectRatio
+        return { width, height }
+      }
+
+      // 如果没有 schema，使用 1:1 的默认比例
+      return { width, height: width }
+    }
+    return { width: 600, height: 600 } // 默认尺寸
+  }, [canvasWidth, canvasHeight, schema])
+
+  // 监听窗口大小变化
+  useEffect(() => {
+    const handleResize = () => {
+      // 只有在没有传入固定尺寸时才更新
+      if (!canvasWidth || !canvasHeight) {
+        setContainerWidth(getResponsiveCanvasSize().width)
+      }
+    }
+
+    // 初始化尺寸
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [getResponsiveCanvasSize, canvasWidth, canvasHeight])
 
   const drawPreview = () => {
     const canvas = canvasRef.current
     if (!canvas) {
-      throw new Error('canvas is not found')
+      // 如果 canvas 还未挂载，不抛出错误而是静默返回
+      return null
     }
 
     const ctx = canvas.getContext('2d')
@@ -41,17 +99,22 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       throw new Error('schame is required')
     }
 
-    // 设置画布尺寸 - 600x600 用于预览
-    canvas.width = canvasWidth
-    canvas.height = canvasHeight
+    // 使用传入的尺寸或响应式尺寸
+    const responsiveSize = getResponsiveCanvasSize()
+    const finalCanvasWidth = canvasWidth || responsiveSize.width
+    const finalCanvasHeight = canvasHeight || responsiveSize.height
+
+    // 设置画布尺寸
+    canvas.width = finalCanvasWidth
+    canvas.height = finalCanvasHeight
 
     // 使用schema中的默认间隔调整布局
     const adjustedSchema = adjustSchemaForSpacing({ schema, spacing })
 
     // 获取当前布局配置
     const fullLayoutSchema = cloneSchema(adjustedSchema)
-    fullLayoutSchema.canvasWidth = canvasWidth
-    fullLayoutSchema.canvasHeight = canvasHeight
+    fullLayoutSchema.canvasWidth = finalCanvasWidth
+    fullLayoutSchema.canvasHeight = finalCanvasHeight
 
     // 绘制背景
     drawBackground(ctx, fullLayoutSchema)
@@ -60,29 +123,41 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       adjustedSchema: fullLayoutSchema,
       drawMedia(element: ImageElement, media: HTMLVideoElement | HTMLImageElement) {
         ctx.save()
-        drawMedia(ctx, media, element, canvasWidth, canvasHeight, padding)
+        drawMedia(ctx, media, element, finalCanvasWidth, finalCanvasHeight, padding)
         ctx.restore()
       },
       drawPlaceholder(element: ImageElement) {
         ctx.save()
-        drawPlaceholder(ctx, element, canvasWidth, canvasHeight, padding)
+        drawPlaceholder(ctx, element, finalCanvasWidth, finalCanvasHeight, padding)
         ctx.restore()
       },
     }
   }
 
   const loadImage = (src: string) => {
-    if (mediaTargetsRef.current[src]) {
-      return mediaTargetsRef.current[src].node
+    const cache = mediaTargetsRef.current[src]
+    // 如果已经加载过该图片，直接返回
+    if (cache) {
+      return Promise.resolve(cache.node)
     }
 
-    return new Promise<HTMLImageElement>((resolve, reject) => {
+    // 如果正在加载该图片，返回已存在的 Promise
+    if (loadingPromisesRef.current[src]) {
+      return loadingPromisesRef.current[src]!
+    }
+
+    // 创建新的加载 Promise 并记录
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image()
       image.onload = () => {
+        // 加载完成后，从加载状态中移除
+        delete loadingPromisesRef.current[src]
         resolve(image)
       }
 
       image.onerror = (error) => {
+        // 加载失败时，从加载状态中移除
+        delete loadingPromisesRef.current[src]
         reject(error)
       }
 
@@ -92,14 +167,26 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
         node: image,
       }
     })
+
+    // 记录加载状态
+    loadingPromisesRef.current[src] = promise
+    return promise
   }
 
   const loadVideo = (src: string) => {
-    if (mediaTargetsRef.current[src]) {
-      return mediaTargetsRef.current[src].node
+    const cache = mediaTargetsRef.current[src]
+    // 如果已经加载过该视频，直接返回
+    if (cache) {
+      return Promise.resolve(cache.node)
     }
 
-    return new Promise<HTMLVideoElement>((resolve, reject) => {
+    // 如果正在加载该视频，返回已存在的 Promise
+    if (loadingPromisesRef.current[src]) {
+      return loadingPromisesRef.current[src]!
+    }
+
+    // 创建新的加载 Promise 并记录
+    const promise = new Promise<HTMLVideoElement>((resolve, reject) => {
       const video = document.createElement('video')
       video.muted = true
       video.playsInline = true
@@ -116,13 +203,19 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       video.oncanplay = async () => {
         try {
           await video.play()
+          // 加载完成后，从加载状态中移除
+          delete loadingPromisesRef.current[src]
           resolve(video)
         } catch (error) {
+          // 加载失败时，从加载状态中移除
+          delete loadingPromisesRef.current[src]
           reject(error)
         }
       }
 
       video.onerror = (error) => {
+        // 加载失败时，从加载状态中移除
+        delete loadingPromisesRef.current[src]
         reject(error)
       }
 
@@ -132,6 +225,10 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
         node: video,
       }
     })
+
+    // 记录加载状态
+    loadingPromisesRef.current[src] = promise
+    return promise
   }
 
   const clearUselessMedias = () => {
@@ -148,6 +245,8 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       item.type === 'video' && (item.node as HTMLVideoElement).pause()
       src && URL.revokeObjectURL(src)
       delete mediaTargetsRef.current[src]
+      // 同时清理加载状态
+      delete loadingPromisesRef.current[src]
     }
   }
 
@@ -156,7 +255,13 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       return
     }
 
-    const { adjustedSchema, drawMedia, drawPlaceholder } = drawPreview()
+    const result = drawPreview()
+    // 如果 canvas 还未挂载，直接返回
+    if (!result) {
+      return
+    }
+
+    const { adjustedSchema, drawMedia, drawPlaceholder } = result
     const imageCount = adjustedSchema.elements.length
 
     const drawImage = async (src: string, element: ImageElement) => {
@@ -234,7 +339,7 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
   useEffect(() => {
     clearUselessMedias()
     loadAndDrawMedias()
-  }, [schema, mediaItems, spacing, padding])
+  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight])
 
   useEffect(() => {
     return () => {

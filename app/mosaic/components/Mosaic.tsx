@@ -68,9 +68,10 @@ export default function Mosaic(props: MosaicProps) {
       return
     }
 
-    // 设置画布尺寸 - 使用更高的分辨率以保持一致性
+    // 设置画布尺寸 - 使用更高的分辨率以保持一致性，并根据 schema 的宽高比进行调整
     const canvasWidth = 2560
-    const canvasHeight = 1440
+    const aspectRatio = schema.canvasHeight / schema.canvasWidth
+    const canvasHeight = canvasWidth * aspectRatio
     canvas.width = canvasWidth
     canvas.height = canvasHeight
 
@@ -144,7 +145,7 @@ export default function Mosaic(props: MosaicProps) {
       console.error('Image loading failed:', error)
       downloadCanvasAsImage(canvas)
     }
-  }, [mediaItems, adjustedSchema, padding])
+  }, [mediaItems, adjustedSchema, padding, schema.canvasHeight, schema.canvasWidth])
 
   // 添加一个处理视频下载的函数
   const handleMergeAsVideo = useCallback(
@@ -185,9 +186,9 @@ export default function Mosaic(props: MosaicProps) {
   }
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto w-full">
       <div className="flex flex-col gap-4 py-4">
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           {/* 操作按钮 */}
           <button
             onClick={handleMerge}
@@ -227,7 +228,7 @@ export default function Mosaic(props: MosaicProps) {
           </button>
         </div>
 
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-4">
           {/* 间距控制 */}
           {schema.spacingRange ? (
             <div className="flex items-center">

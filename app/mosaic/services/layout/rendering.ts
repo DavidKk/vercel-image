@@ -162,7 +162,7 @@ export function drawMediaFill(
 
 /**
  * 绘制媒体元素
- * 注意：此函数不调用 save/restore，调用方需要负责上下文状态管理
+ * 注意：此函数会在需要时调用 save() 和 restore() 来管理上下文状态
  * @param ctx Canvas绘制上下文
  * @param media 媒体元素（图片或视频）
  * @param element 图片元素配置
@@ -179,10 +179,6 @@ export function drawMedia(
   padding = 0
 ) {
   const pos = calculateElementPosition(element, canvasWidth, canvasHeight, padding)
-  // 注意：此函数不调用 save/restore，调用方需要负责上下文状态管理
-
-  // 保存当前状态，以便在应用效果后恢复
-  ctx.save()
 
   // 应用变换
   if (element.rotation || element.scaleX !== undefined || element.scaleY !== undefined) {
@@ -255,17 +251,12 @@ export function drawMedia(
     }
   }
 
-  // 恢复状态，确保阴影、混合模式等效果不会影响图片绘制
-  ctx.restore()
-
   // 根据fit属性绘制媒体
   switch (element.fit) {
     case 'cover':
       // 应用遮罩
-      if (element.mask) {
-        ctx.save()
-        drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
-      }
+      ctx.save()
+      drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
 
       if (element.borderRadius) {
         drawRoundedRectPath(ctx, pos.x, pos.y, pos.width, pos.height, element.borderRadius)
@@ -273,18 +264,13 @@ export function drawMedia(
       }
 
       drawMediaCover(ctx, media, element, pos)
-
-      if (element.mask) {
-        ctx.restore()
-      }
+      ctx.restore()
       break
 
     case 'contain':
       // 应用遮罩
-      if (element.mask) {
-        ctx.save()
-        drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
-      }
+      ctx.save()
+      drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
 
       if (element.borderRadius) {
         drawRoundedRectPath(ctx, pos.x, pos.y, pos.width, pos.height, element.borderRadius)
@@ -292,19 +278,14 @@ export function drawMedia(
       }
 
       drawMediaContain(ctx, media, element, pos)
-
-      if (element.mask) {
-        ctx.restore()
-      }
+      ctx.restore()
       break
 
     case 'fill':
     default:
       // 应用遮罩
-      if (element.mask) {
-        ctx.save()
-        drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
-      }
+      ctx.save()
+      drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
 
       if (element.borderRadius) {
         drawRoundedRectPath(ctx, pos.x, pos.y, pos.width, pos.height, element.borderRadius)
@@ -312,10 +293,7 @@ export function drawMedia(
       }
 
       drawMediaFill(ctx, media, element, pos)
-
-      if (element.mask) {
-        ctx.restore()
-      }
+      ctx.restore()
       break
   }
 }

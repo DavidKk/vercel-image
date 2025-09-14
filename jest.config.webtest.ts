@@ -11,9 +11,9 @@ const { compilerOptions } = JSON5.parse<{ compilerOptions: CompilerOptions }>(ts
 const tsconfigPaths = compilerOptions.paths!
 
 export default (): Config.InitialOptions => ({
-  preset: 'ts-jest',
+  preset: 'ts-jest/presets/js-with-ts',
   testEnvironment: 'jsdom',
-  testMatch: ['<rootDir>/__webtests__/**/*.spec.ts'],
+  testMatch: ['<rootDir>/__webtests__/**/*.spec.ts?(x)'],
   setupFiles: ['<rootDir>/jest/setupCanvas.ts'],
   moduleNameMapper: {
     ...pathsToModuleNameMapper(tsconfigPaths, {
