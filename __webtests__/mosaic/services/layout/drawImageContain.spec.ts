@@ -1,4 +1,4 @@
-import { drawMediaContain } from '@/app/mosaic/services/layout/rendering'
+import { drawMediaContain } from '@/app/mosaic/services/layout/rendering/drawMediaContain'
 import type { ImageElement } from '@/app/mosaic/types'
 
 // Mock Canvas API

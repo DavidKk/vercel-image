@@ -18,6 +18,7 @@ export const parallelogram: LayoutSchema = {
       zIndex: 1,
       fit: 'cover',
       origin: { x: '0%', y: '50%' },
+      spacingDirection: 'horizontal',
       mask: {
         type: 'shape',
         shape: 'polygon',
@@ -39,6 +40,7 @@ export const parallelogram: LayoutSchema = {
       zIndex: 1,
       fit: 'cover',
       origin: { x: '100%', y: '50%' },
+      spacingDirection: 'horizontal',
       mask: {
         type: 'shape',
         shape: 'polygon',
@@ -60,6 +62,7 @@ export const parallelogram: LayoutSchema = {
       zIndex: 2,
       fit: 'cover',
       origin: { x: '50%', y: '50%' },
+      spacingDirection: 'horizontal',
       mask: {
         type: 'shape',
         shape: 'polygon',

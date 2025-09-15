@@ -1,4 +1,4 @@
-import { drawBackground } from '@/app/mosaic/services/layout/rendering'
+import { drawBackground } from '@/app/mosaic/services/layout/rendering/drawBackground'
 import type { LayoutSchema } from '@/app/mosaic/types'
 
 describe('drawBackground', () => {

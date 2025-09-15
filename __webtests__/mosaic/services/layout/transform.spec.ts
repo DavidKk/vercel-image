@@ -1,4 +1,4 @@
-import { drawPlaceholder } from '@/app/mosaic/services/layout/rendering'
+import { drawPlaceholder } from '@/app/mosaic/services/layout/rendering/drawPlaceholder'
 import type { ImageElement } from '@/app/mosaic/types'
 
 describe('Transform Tests', () => {

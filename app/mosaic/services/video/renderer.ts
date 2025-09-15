@@ -83,10 +83,11 @@ export async function renderOffscreenContent(
             // 尝试播放视频
             if (video.readyState >= 2) {
               try {
+                // 在iOS上，可能需要用户交互才能播放视频
                 await video.play()
               } catch (playError) {
                 // eslint-disable-next-line no-console
-                console.warn('Failed to play video:', playError)
+                console.warn('Failed to play video (may be due to iOS restrictions):', playError)
               }
 
               resolve()
@@ -109,6 +110,12 @@ export async function renderOffscreenContent(
         }
 
         video.onloadedmetadata = () => {
+          // 确保视频尺寸已设置
+          if (video.videoWidth > 0 && video.videoHeight > 0) {
+            video.width = video.videoWidth
+            video.height = video.videoHeight
+          }
+
           // 视频元数据加载完成
         }
 

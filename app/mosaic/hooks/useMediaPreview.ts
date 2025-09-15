@@ -190,34 +190,68 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       const video = document.createElement('video')
       video.muted = true
       video.playsInline = true
-      video.preload = 'auto'
+      video.preload = 'metadata' // 改为metadata，减少初始加载
       video.loop = true
+      video.controls = false // 确保不显示控件
 
-      video.onloadedmetadata = () => {
-        if (video.readyState === 1) {
-          video.width = video.videoWidth
-          video.height = video.videoHeight
+      // 添加事件监听器以处理iOS的限制
+      let resolved = false
+
+      const handleCanPlay = async () => {
+        if (resolved) return
+
+        try {
+          // 尝试播放视频
+          await video.play()
+
+          if (!resolved) {
+            resolved = true
+            // 加载完成后，从加载状态中移除
+            delete loadingPromisesRef.current[src]
+            resolve(video)
+          }
+        } catch (playError) {
+          // 在iOS上可能因为用户交互限制而失败，但这不应该阻止加载
+          // eslint-disable-next-line no-console
+          console.warn('Failed to auto-play video (may be due to iOS restrictions):', playError)
+
+          if (!resolved) {
+            resolved = true
+            // 加载完成后，从加载状态中移除
+            delete loadingPromisesRef.current[src]
+            resolve(video)
+          }
         }
       }
 
-      video.oncanplay = async () => {
-        try {
-          await video.play()
-          // 加载完成后，从加载状态中移除
-          delete loadingPromisesRef.current[src]
-          resolve(video)
-        } catch (error) {
+      video.onloadeddata = handleCanPlay
+      video.oncanplay = handleCanPlay
+      video.oncanplaythrough = handleCanPlay
+
+      video.onloadedmetadata = () => {
+        if (video.readyState >= 1) {
+          video.width = video.videoWidth || 300 // 设置默认宽度
+          video.height = video.videoHeight || 200 // 设置默认高度
+        }
+      }
+
+      video.onerror = (error) => {
+        if (!resolved) {
+          resolved = true
           // 加载失败时，从加载状态中移除
           delete loadingPromisesRef.current[src]
           reject(error)
         }
       }
 
-      video.onerror = (error) => {
-        // 加载失败时，从加载状态中移除
-        delete loadingPromisesRef.current[src]
-        reject(error)
-      }
+      // 设置超时处理
+      setTimeout(() => {
+        if (!resolved && video.readyState >= 1) {
+          resolved = true
+          delete loadingPromisesRef.current[src]
+          resolve(video)
+        }
+      }, 3000) // 3秒超时
 
       video.src = src
       mediaTargetsRef.current[src] = {
@@ -285,7 +319,13 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
             return
           }
 
-          drawMedia(element, video)
+          // 检查视频是否已准备好播放
+          if ((video as HTMLVideoElement).readyState >= 2) {
+            drawMedia(element, video)
+          } else {
+            // 视频未准备好，绘制占位符
+            drawPlaceholder(element)
+          }
         })
       } catch (error) {
         // eslint-disable-next-line no-console
