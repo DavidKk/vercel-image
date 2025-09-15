@@ -50,6 +50,11 @@ export default function Mosaic(props: MosaicProps) {
     return [0, 10]
   }, [schema.paddingRange])
 
+  // 检查媒体项中是否包含视频
+  const hasVideo = useMemo(() => {
+    return mediaItems.some((item) => item.type === 'video' && item.src)
+  }, [mediaItems])
+
   const downloadCanvasAsImage = (canvas: HTMLCanvasElement) => {
     const link = document.createElement('a')
     link.download = `${new Date().getTime()}.png`
@@ -177,6 +182,19 @@ export default function Mosaic(props: MosaicProps) {
     [adjustedSchema, mediaItems, exportAsVideo]
   )
 
+  // 智能下载函数 - 根据媒体类型自动选择下载方式
+  const handleSmartDownload = useCallback(async () => {
+    // 如果包含视频，则下载为视频，否则下载为图片
+    if (hasVideo) {
+      // 获取最长视频的时长
+      const videoUrls = mediaItems.filter((item) => item.type === 'video' && item.src).map((item) => item.src as string)
+      const duration = await getLongestVideoDuration(videoUrls)
+      handleMergeAsVideo(duration)
+    } else {
+      handleMerge()
+    }
+  }, [hasVideo, mediaItems, handleMerge, handleMergeAsVideo])
+
   // 重置所有媒体项
   const handleReset = () => {
     // 在重置前，我们需要释放所有通过 URL.createObjectURL 创建的对象 URL
@@ -191,21 +209,9 @@ export default function Mosaic(props: MosaicProps) {
         <div className="flex flex-wrap items-center justify-center gap-4">
           {/* 操作按钮 */}
           <button
-            onClick={handleMerge}
-            disabled={mediaItems.every((item) => !item.src)}
-            className="relative max-w-lg bg-indigo-500 text-white px-4 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Merge Images
-          </button>
-          <button
-            onClick={async () => {
-              // 获取最长视频的时长
-              const videoUrls = mediaItems.filter((item) => item.type === 'video' && item.src).map((item) => item.src as string)
-              const duration = await getLongestVideoDuration(videoUrls)
-              handleMergeAsVideo(duration)
-            }}
+            onClick={handleSmartDownload}
             disabled={mediaItems.every((item) => !item.src) || isExporting}
-            className="relative max-w-lg bg-purple-500 text-white px-4 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative max-w-lg bg-indigo-500 text-white px-4 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isExporting ? (
               <div className="flex items-center">
@@ -220,7 +226,7 @@ export default function Mosaic(props: MosaicProps) {
                 Exporting...
               </div>
             ) : (
-              'Export as Video'
+              'Download'
             )}
           </button>
           <button onClick={handleReset} className="relative max-w-lg bg-red-500 text-white px-4 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed">

@@ -3,11 +3,13 @@
 import { useRef } from 'react'
 import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
 import { useMediaPreview, type UseMediaPreviewOptions } from '@/app/mosaic/hooks/useMediaPreview'
+import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
+import type { MediaObject } from '@/app/mosaic/types'
 
 export interface MediaGridProps extends UseMediaPreviewOptions {}
 
 export default function MediaGrid(props: MediaGridProps) {
-  const { schema, mediaItems, setMediaItems, spacing, padding } = props
+  const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
   // 不再传入 canvasWidth 和 canvasHeight，让 hook 自动处理响应式尺寸
   const { canvasRef, select } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
@@ -19,8 +21,72 @@ export default function MediaGrid(props: MediaGridProps) {
     }
 
     fileInputRef.current.onchange = async (event: any) => {
-      const file = event.target.files?.[0]
-      file && select(index, file)
+      const files = event.target.files
+      if (!files || files.length === 0) {
+        return
+      }
+
+      // 计算已选中的媒体项数量
+      const selectedCount = mediaItems.filter((item) => item.src).length
+      // 计算剩余可选位置数量
+      const remainingSlots = mediaItems.length - selectedCount
+
+      // 如果没有选中任何图片，则可以选择最多N张图片
+      // 如果已经选择了一些图片，则只能选择剩余位置数量的图片
+      const maxFiles = selectedCount === 0 ? mediaItems.length : remainingSlots
+
+      // 如果只选择了一个文件，则替换原有位置的图片
+      if (files.length === 1) {
+        const file = files[0]
+        file && select(index, file)
+      }
+      // 如果选择了多个文件，以补完的形式添加
+      else {
+        try {
+          // 限制文件数量不超过可选位置
+          const filesToProcess = Math.min(files.length, maxFiles)
+
+          // 创建新的媒体项数组
+          const newMediaItems: MediaObject[] = [...mediaItems]
+
+          // 找到第一个空位置的索引
+          let firstEmptyIndex = 0
+          if (selectedCount > 0) {
+            // 如果已有选中图片，则从第一个空位置开始填充
+            for (let i = 0; i < mediaItems.length; i++) {
+              if (!newMediaItems[i].src) {
+                firstEmptyIndex = i
+                break
+              }
+            }
+          }
+
+          // 为每个文件分配一个位置
+          const processPromises: Promise<void>[] = []
+          for (let i = 0; i < filesToProcess; i++) {
+            const targetIndex = selectedCount === 0 ? i : firstEmptyIndex + i
+            if (targetIndex < mediaItems.length) {
+              processPromises.push(
+                processFileToUrl(files[i]).then(({ fileUrl, mediaType }) => {
+                  newMediaItems[targetIndex] = {
+                    type: mediaType,
+                    src: fileUrl,
+                  }
+                })
+              )
+            }
+          }
+
+          // 等待所有文件处理完成
+          await Promise.all(processPromises)
+
+          setMediaItems && setMediaItems(newMediaItems)
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.error('Failed to process files:', error)
+        }
+      }
+
       event.target.value = ''
     }
 
@@ -75,7 +141,7 @@ export default function MediaGrid(props: MediaGridProps) {
         <canvas ref={canvasRef} className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200" onClick={handleCanvasClick} />
       </div>
 
-      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,video/*" />
+      <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,video/*" multiple />
     </>
   )
 }
