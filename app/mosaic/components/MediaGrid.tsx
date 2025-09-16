@@ -1,8 +1,9 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
 import { useMediaPreview, type UseMediaPreviewOptions } from '@/app/mosaic/hooks/useMediaPreview'
+import { useDragHandler } from '@/app/mosaic/hooks/useDragHandler'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import type { MediaObject } from '@/app/mosaic/types'
 
@@ -11,8 +12,28 @@ export interface MediaGridProps extends UseMediaPreviewOptions {}
 export default function MediaGrid(props: MediaGridProps) {
   const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [dragOccurred, setDragOccurred] = useState(false)
   // 不再传入 canvasWidth 和 canvasHeight，让 hook 自动处理响应式尺寸
   const { canvasRef, select } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
+
+  // 处理拖动功能
+  const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, hasDragged } = useDragHandler({
+    schema,
+    onDragStart: (elementIndex, offsetX, offsetY) => {
+      // eslint-disable-next-line no-console
+      console.log('Drag start:', { elementIndex, offsetX, offsetY })
+      setDragOccurred(false)
+    },
+    onDragMove: (elementIndex, offsetX, offsetY) => {
+      // eslint-disable-next-line no-console
+      console.log('Drag move:', { elementIndex, offsetX, offsetY })
+      setDragOccurred(true)
+    },
+    onDragEnd: (elementIndex, offsetX, offsetY) => {
+      // eslint-disable-next-line no-console
+      console.log('Drag end:', { elementIndex, offsetX, offsetY })
+    },
+  })
 
   // 处理文件选择
   const handleFileSelect = (index: number) => {
@@ -95,6 +116,13 @@ export default function MediaGrid(props: MediaGridProps) {
 
   // 通过Canvas点击上传媒体项
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    // 如果发生了拖动，则不处理点击事件
+    if (dragOccurred) {
+      // 重置拖动状态
+      setDragOccurred(false)
+      return
+    }
+
     if (!schema) {
       return
     }
@@ -138,7 +166,15 @@ export default function MediaGrid(props: MediaGridProps) {
     <>
       {/* 修改容器类以支持响应式设计，移除固定宽高，使用响应式尺寸 */}
       <div className="mb-6 flex justify-center w-full">
-        <canvas ref={canvasRef} className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200" onClick={handleCanvasClick} />
+        <canvas
+          ref={canvasRef}
+          className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200"
+          onClick={handleCanvasClick}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+        />
       </div>
 
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,video/*" multiple />
