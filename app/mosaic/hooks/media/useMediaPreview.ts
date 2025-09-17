@@ -63,22 +63,6 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     return { width: 600, height: 600 } // 默认尺寸
   }, [canvasWidth, canvasHeight, schema])
 
-  // 监听窗口大小变化
-  useEffect(() => {
-    const handleResize = () => {
-      // 只有在没有传入固定尺寸时才更新
-      if (!canvasWidth || !canvasHeight) {
-        setContainerWidth(getResponsiveCanvasSize().width)
-      }
-    }
-
-    // 初始化尺寸
-    handleResize()
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [getResponsiveCanvasSize, canvasWidth, canvasHeight])
-
   const drawPreview = () => {
     const canvas = canvasRef.current
     if (!canvas) {
@@ -119,29 +103,16 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       adjustedSchema: fullLayoutSchema,
       drawMedia(element: ImageElement, media: HTMLVideoElement | HTMLImageElement) {
         ctx.save()
-        // 应用媒体的偏移位置
-        const elementIndex = adjustedSchema.elements.indexOf(element)
-        if (elementIndex !== -1) {
-          const offset = getMediaOffset(elementIndex)
-          if (offset.x !== 0 || offset.y !== 0) {
-            ctx.translate(offset.x, offset.y)
-          }
-        }
 
-        drawMedia(ctx, media, element, finalCanvasWidth, finalCanvasHeight, padding)
+        // 偏移内容
+        const elementIndex = fullLayoutSchema.elements.indexOf(element)
+        const offset = getMediaOffset(elementIndex)
+        drawMedia(ctx, media, element, finalCanvasWidth, finalCanvasHeight, padding, offset.x, offset.y)
+
         ctx.restore()
       },
       drawPlaceholder(element: ImageElement) {
         ctx.save()
-        // 应用媒体的偏移位置
-        const elementIndex = adjustedSchema.elements.indexOf(element)
-        if (elementIndex !== -1) {
-          const offset = getMediaOffset(elementIndex)
-          if (offset.x !== 0 || offset.y !== 0) {
-            ctx.translate(offset.x, offset.y)
-          }
-        }
-
         drawPlaceholder(ctx, element, finalCanvasWidth, finalCanvasHeight, padding)
         ctx.restore()
       },
@@ -358,43 +329,60 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     }
   }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight, drawPreview, addRaf, clearRafs])
 
-  const { setMediaOffset, getMediaOffset, resetMediaOffset } = useMediaOffset({
+  const { getMediaOffset, setMediaOffset, resetMediaOffset } = useMediaOffset({
     schema,
     onUpdate: (index, offset) => {
       loadAndDrawMedias()
     },
   })
 
-
-  const select = useCallback(async (index: number, file: File) => {
-    if (typeof setMediaItems !== 'function') {
-      return
-    }
-
-    // 验证索引是否有效
-    if (!schema || index < 0 || index >= schema.elements.length) {
-      throw new Error(`Invalid index ${index}. Schema has ${schema?.elements.length || 0} elements.`)
-    }
-
-    const { fileUrl, mediaType } = await processFileToUrl(file)
-    setMediaItems((mediaItems) => {
-      const newMediaItems = [...mediaItems]
-      newMediaItems[index] = {
-        type: mediaType,
-        src: fileUrl,
+  const select = useCallback(
+    async (index: number, file: File) => {
+      if (typeof setMediaItems !== 'function') {
+        return
       }
 
-      return newMediaItems
-    })
+      // 验证索引是否有效
+      if (!schema || index < 0 || index >= schema.elements.length) {
+        throw new Error(`Invalid index ${index}. Schema has ${schema?.elements.length || 0} elements.`)
+      }
 
-    // 当新添加图片或视频时，将其偏移位置重置为0
-    resetMediaOffset(index)
-  }, [mediaItems, setMediaItems, resetMediaOffset, schema])
+      const { fileUrl, mediaType } = await processFileToUrl(file)
+      setMediaItems((mediaItems) => {
+        const newMediaItems = [...mediaItems]
+        newMediaItems[index] = {
+          type: mediaType,
+          src: fileUrl,
+        }
 
-  
+        return newMediaItems
+      })
+
+      // 当新添加图片或视频时，将其偏移位置重置为0
+      resetMediaOffset(index)
+    },
+    [mediaItems, setMediaItems, resetMediaOffset, schema]
+  )
+
+  // 监听窗口大小变化
+  useEffect(() => {
+    const handleResize = () => {
+      // 只有在没有传入固定尺寸时才更新
+      if (!canvasWidth || !canvasHeight) {
+        setContainerWidth(getResponsiveCanvasSize().width)
+      }
+    }
+
+    // 初始化尺寸
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [getResponsiveCanvasSize, canvasWidth, canvasHeight])
+
   useEffect(() => {
     loadAndDrawMedias()
   }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight])
 
-  return { canvasRef, select, setMediaOffset }
+  return { canvasRef, select, getMediaOffset, setMediaOffset }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState } from 'react'
 import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
 import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
 import { useDragHandler } from '@/app/mosaic/hooks/useDragHandler'
@@ -19,17 +19,23 @@ export default function MediaGrid(props: MediaGridProps) {
   const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOccurred, setDragOccurred] = useState(false)
-  const { canvasRef, select, setMediaOffset } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
+  const { canvasRef, select, getMediaOffset, setMediaOffset } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
 
-  // 处理拖动功能
+  const offsetXRef = useRef<number>(0)
+  const offsetYRef = useRef<number>(0)
   const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } = useDragHandler({
     schema,
-    onDragStart: () => {
+    onDragStart: (elementIndex) => {
       setDragOccurred(false)
+
+      const offset = getMediaOffset(elementIndex)
+      offsetXRef.current = offset.x
+      offsetYRef.current = offset.y
     },
     onDragMove: (elementIndex, offsetX, offsetY) => {
       setDragOccurred(true)
-      setMediaOffset(elementIndex, offsetX, offsetY)
+
+      setMediaOffset(elementIndex, offsetXRef.current + offsetX, offsetYRef.current + offsetY)
     },
   })
 

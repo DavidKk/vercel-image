@@ -22,7 +22,9 @@ export function drawMedia(
   element: ImageElement,
   canvasWidth: number,
   canvasHeight: number,
-  padding = 0
+  padding = 0,
+  mediaOffsetX = 0,
+  mediaOffsetY = 0
 ) {
   const pos = calculateElementPosition(element, canvasWidth, canvasHeight, padding)
 
@@ -99,7 +101,7 @@ export function drawMedia(
 
   // 根据fit属性绘制媒体
   switch (element.fit) {
-    case 'cover':
+    case 'cover': {
       // 应用遮罩
       ctx.save()
       drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
@@ -109,11 +111,13 @@ export function drawMedia(
         ctx.clip()
       }
 
-      drawMediaCover(ctx, media, element, pos)
+      const offsetedPos = { ...pos, x: pos.x + mediaOffsetX, y: pos.y + mediaOffsetY }
+      drawMediaCover(ctx, media, element, offsetedPos)
       ctx.restore()
       break
+    }
 
-    case 'contain':
+    case 'contain': {
       // 应用遮罩
       ctx.save()
       drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
@@ -123,12 +127,14 @@ export function drawMedia(
         ctx.clip()
       }
 
-      drawMediaContain(ctx, media, element, pos)
+      const offsetedPos = { ...pos, x: pos.x + mediaOffsetX, y: pos.y + mediaOffsetY }
+      drawMediaContain(ctx, media, element, offsetedPos)
       ctx.restore()
       break
+    }
 
     case 'fill':
-    default:
+    default: {
       // 应用遮罩
       ctx.save()
       drawMask(ctx, element, pos.x, pos.y, pos.width, pos.height)
@@ -138,8 +144,10 @@ export function drawMedia(
         ctx.clip()
       }
 
-      drawMediaFill(ctx, media, element, pos)
+      const offsetedPos = { ...pos, x: pos.x + mediaOffsetX, y: pos.y + mediaOffsetY }
+      drawMediaFill(ctx, media, element, offsetedPos)
       ctx.restore()
       break
+    }
   }
 }
