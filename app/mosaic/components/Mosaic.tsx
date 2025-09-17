@@ -31,6 +31,7 @@ export default function Mosaic(props: MosaicProps) {
     if (adjusted) {
       adjusted.padding = padding
     }
+
     return adjusted
   }, [schema, spacing, padding])
 

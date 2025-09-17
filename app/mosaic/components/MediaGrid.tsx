@@ -1,37 +1,35 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
-import { useMediaPreview, type UseMediaPreviewOptions } from '@/app/mosaic/hooks/useMediaPreview'
+import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
 import { useDragHandler } from '@/app/mosaic/hooks/useDragHandler'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
-import type { MediaObject } from '@/app/mosaic/types'
+import type { MediaObject, LayoutSchema } from '@/app/mosaic/types'
 
-export interface MediaGridProps extends UseMediaPreviewOptions {}
+interface MediaGridProps {
+  schema?: LayoutSchema
+  mediaItems?: MediaObject[]
+  setMediaItems?: (mediaItems: MediaObject[] | ((prev: MediaObject[]) => MediaObject[])) => void
+  spacing?: number
+  padding?: number
+}
 
 export default function MediaGrid(props: MediaGridProps) {
   const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOccurred, setDragOccurred] = useState(false)
-  // 不再传入 canvasWidth 和 canvasHeight，让 hook 自动处理响应式尺寸
-  const { canvasRef, select } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
+  const { canvasRef, select, setMediaOffset } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
 
   // 处理拖动功能
-  const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave, hasDragged } = useDragHandler({
+  const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } = useDragHandler({
     schema,
-    onDragStart: (elementIndex, offsetX, offsetY) => {
-      // eslint-disable-next-line no-console
-      console.log('Drag start:', { elementIndex, offsetX, offsetY })
+    onDragStart: () => {
       setDragOccurred(false)
     },
     onDragMove: (elementIndex, offsetX, offsetY) => {
-      // eslint-disable-next-line no-console
-      console.log('Drag move:', { elementIndex, offsetX, offsetY })
       setDragOccurred(true)
-    },
-    onDragEnd: (elementIndex, offsetX, offsetY) => {
-      // eslint-disable-next-line no-console
-      console.log('Drag end:', { elementIndex, offsetX, offsetY })
+      setMediaOffset(elementIndex, offsetX, offsetY)
     },
   })
 

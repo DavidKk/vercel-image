@@ -1,6 +1,6 @@
 'use client'
 
-import { useMediaPreview } from '@/app/mosaic/hooks/useMediaPreview'
+import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
 import type { LayoutSchema } from '@/app/mosaic/types'
 
 export interface ThumbnailProps {

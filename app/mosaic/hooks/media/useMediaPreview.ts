@@ -1,10 +1,13 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { cloneSchema, adjustSchemaForSpacing, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
-import type { ImageElement, LayoutSchema, MediaObject, MediaType } from '@/app/mosaic/types'
+import type { ImageElement, LayoutSchema, MediaObject } from '@/app/mosaic/types'
+import type { MediaTarget } from './types'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import { useRafController } from '@/hooks/useRafController'
+import { useMediaOffset } from './useMediaOffset'
 
-export interface UseMediaPreviewOptions {
+// 定义媒体预览选项类型
+interface UseMediaPreviewOptions {
   schema?: LayoutSchema
   mediaItems?: MediaObject[]
   setMediaItems?: (mediaItems: MediaObject[] | ((prev: MediaObject[]) => MediaObject[])) => void
@@ -14,17 +17,17 @@ export interface UseMediaPreviewOptions {
   canvasHeight?: number
 }
 
-export interface MediaTarget {
-  type: MediaType
-  node: HTMLImageElement | HTMLVideoElement
-}
-
 export function useMediaPreview(props: UseMediaPreviewOptions) {
   const { schema, mediaItems, setMediaItems, spacing = schema?.spacing, padding = schema?.padding, canvasWidth, canvasHeight } = props
-
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const { 
+    setMediaOffset, 
+    getMediaOffset, 
+    resetMediaOffset, 
+    resetAllMediaOffsets
+  } = useMediaOffset({ schema })
+
   const mediaTargetsRef = useRef<Record<string, MediaTarget>>({})
-  // 添加一个加载状态的记录，避免重复加载相同的资源
   const loadingPromisesRef = useRef<Record<string, Promise<HTMLImageElement | HTMLVideoElement> | undefined>>({})
   const { add: addRaf, clear: clearRafs } = useRafController()
 
@@ -96,7 +99,7 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     }
 
     if (!schema) {
-      throw new Error('schame is required')
+      throw new Error('schema is required')
     }
 
     // 使用传入的尺寸或响应式尺寸
@@ -123,11 +126,29 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       adjustedSchema: fullLayoutSchema,
       drawMedia(element: ImageElement, media: HTMLVideoElement | HTMLImageElement) {
         ctx.save()
+        // 应用媒体的偏移位置
+        const elementIndex = adjustedSchema.elements.indexOf(element)
+        if (elementIndex !== -1) {
+          const offset = getMediaOffset(elementIndex)
+          if (offset.x !== 0 || offset.y !== 0) {
+            ctx.translate(offset.x, offset.y)
+          }
+        }
+
         drawMedia(ctx, media, element, finalCanvasWidth, finalCanvasHeight, padding)
         ctx.restore()
       },
       drawPlaceholder(element: ImageElement) {
         ctx.save()
+        // 应用媒体的偏移位置
+        const elementIndex = adjustedSchema.elements.indexOf(element)
+        if (elementIndex !== -1) {
+          const offset = getMediaOffset(elementIndex)
+          if (offset.x !== 0 || offset.y !== 0) {
+            ctx.translate(offset.x, offset.y)
+          }
+        }
+
         drawPlaceholder(ctx, element, finalCanvasWidth, finalCanvasHeight, padding)
         ctx.restore()
       },
@@ -165,6 +186,8 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       mediaTargetsRef.current[src] = {
         type: 'image',
         node: image,
+        offsetX: 0, // 初始化偏移位置
+        offsetY: 0,
       }
     })
 
@@ -257,31 +280,14 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       mediaTargetsRef.current[src] = {
         type: 'video',
         node: video,
+        offsetX: 0, // 初始化偏移位置
+        offsetY: 0,
       }
     })
 
     // 记录加载状态
     loadingPromisesRef.current[src] = promise
     return promise
-  }
-
-  const clearUselessMedias = () => {
-    if (!mediaItems) {
-      return
-    }
-
-    const mediaEntries = Object.entries(mediaTargetsRef.current)
-    for (const [src, item] of mediaEntries) {
-      if (mediaItems.some((item) => item.src === src)) {
-        continue
-      }
-
-      item.type === 'video' && (item.node as HTMLVideoElement).pause()
-      src && URL.revokeObjectURL(src)
-      delete mediaTargetsRef.current[src]
-      // 同时清理加载状态
-      delete loadingPromisesRef.current[src]
-    }
   }
 
   const loadAndDrawMedias = () => {
@@ -364,6 +370,11 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
       return
     }
 
+    // 验证索引是否有效
+    if (!schema || index < 0 || index >= schema.elements.length) {
+      throw new Error(`Invalid index ${index}. Schema has ${schema?.elements.length || 0} elements.`)
+    }
+
     const { fileUrl, mediaType } = await processFileToUrl(file)
     setMediaItems((mediaItems) => {
       const newMediaItems = [...mediaItems]
@@ -374,18 +385,22 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
 
       return newMediaItems
     })
-  }, [])
+
+    // 当新添加图片或视频时，将其偏移位置重置为0
+    resetMediaOffset(index)
+  }, [mediaItems, setMediaItems, resetMediaOffset, schema])
 
   useEffect(() => {
-    clearUselessMedias()
     loadAndDrawMedias()
-  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight])
+  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight]) // 移除 offsetVersion 依赖
 
-  useEffect(() => {
-    return () => {
-      clearUselessMedias()
-    }
-  }, [])
-
-  return { canvasRef, select }
+  return {
+    canvasRef,
+    select,
+    setMediaOffset: (index: number, offsetX: number, offsetY: number) => 
+      setMediaOffset(index, offsetX, offsetY),
+    getMediaOffset: (index: number) => getMediaOffset(index),
+    resetMediaOffset: (index: number) => resetMediaOffset(index),
+    resetAllMediaOffsets,
+  }
 }

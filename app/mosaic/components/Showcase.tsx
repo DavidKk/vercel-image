@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
-import { useMediaPreview } from '@/app/mosaic/hooks/useMediaPreview'
+import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
 import { Spinner } from '@/components/Spinner'
 
 export interface ShowcaseItem {

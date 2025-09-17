@@ -184,6 +184,6 @@ export function useDragHandler(options: UseDragHandlerOptions) {
     handleMouseMove,
     handleMouseUp,
     handleMouseLeave,
-    hasDragged, // 返回这个函数供外部使用
+    hasDragged,
   }
 }
