@@ -30,28 +30,6 @@ export const parallelogram: LayoutSchema = {
         ],
       },
     },
-    // 右侧梯形
-    {
-      id: '3',
-      x: '0%',
-      y: '0%',
-      width: '100%',
-      height: '100%',
-      zIndex: 1,
-      fit: 'cover',
-      origin: { x: '100%', y: '50%' },
-      spacingDirection: 'horizontal',
-      mask: {
-        type: 'shape',
-        shape: 'polygon',
-        polygonPoints: [
-          { x: 100 - 22.11 + '%', y: '0%' },
-          { x: '100%', y: '0%' },
-          { x: '100%', y: '100%' },
-          { x: 100 - 33.3333 + '%', y: '100%' },
-        ],
-      },
-    },
     // 中间平行四边形
     {
       id: '2',
@@ -71,6 +49,28 @@ export const parallelogram: LayoutSchema = {
           { x: 100 - 22.11 + '%', y: '0%' },
           { x: 100 - 33.33 + '%', y: '100%' },
           { x: '22.11%', y: '100%' },
+        ],
+      },
+    },
+    // 右侧梯形
+    {
+      id: '3',
+      x: '0%',
+      y: '0%',
+      width: '100%',
+      height: '100%',
+      zIndex: 1,
+      fit: 'cover',
+      origin: { x: '100%', y: '50%' },
+      spacingDirection: 'horizontal',
+      mask: {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [
+          { x: 100 - 22.11 + '%', y: '0%' },
+          { x: '100%', y: '0%' },
+          { x: '100%', y: '100%' },
+          { x: 100 - 33.3333 + '%', y: '100%' },
         ],
       },
     },

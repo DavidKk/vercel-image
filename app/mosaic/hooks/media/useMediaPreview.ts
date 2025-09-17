@@ -20,13 +20,6 @@ interface UseMediaPreviewOptions {
 export function useMediaPreview(props: UseMediaPreviewOptions) {
   const { schema, mediaItems, setMediaItems, spacing = schema?.spacing, padding = schema?.padding, canvasWidth, canvasHeight } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const { 
-    setMediaOffset, 
-    getMediaOffset, 
-    resetMediaOffset, 
-    resetAllMediaOffsets
-  } = useMediaOffset({ schema })
-
   const mediaTargetsRef = useRef<Record<string, MediaTarget>>({})
   const loadingPromisesRef = useRef<Record<string, Promise<HTMLImageElement | HTMLVideoElement> | undefined>>({})
   const { add: addRaf, clear: clearRafs } = useRafController()
@@ -290,7 +283,7 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     return promise
   }
 
-  const loadAndDrawMedias = () => {
+  const loadAndDrawMedias = useCallback(() => {
     if (!schema) {
       return
     }
@@ -363,7 +356,15 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
           continue
       }
     }
-  }
+  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight, drawPreview, addRaf, clearRafs])
+
+  const { setMediaOffset, getMediaOffset, resetMediaOffset } = useMediaOffset({
+    schema,
+    onUpdate: (index, offset) => {
+      loadAndDrawMedias()
+    },
+  })
+
 
   const select = useCallback(async (index: number, file: File) => {
     if (typeof setMediaItems !== 'function') {
@@ -390,17 +391,10 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     resetMediaOffset(index)
   }, [mediaItems, setMediaItems, resetMediaOffset, schema])
 
+  
   useEffect(() => {
     loadAndDrawMedias()
-  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight]) // 移除 offsetVersion 依赖
+  }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight])
 
-  return {
-    canvasRef,
-    select,
-    setMediaOffset: (index: number, offsetX: number, offsetY: number) => 
-      setMediaOffset(index, offsetX, offsetY),
-    getMediaOffset: (index: number) => getMediaOffset(index),
-    resetMediaOffset: (index: number) => resetMediaOffset(index),
-    resetAllMediaOffsets,
-  }
+  return { canvasRef, select, setMediaOffset }
 }
