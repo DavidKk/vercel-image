@@ -3,7 +3,7 @@ import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import { mergeRefs } from '@/utils/refs'
 import { useMediaOffset } from './useMediaOffset'
-import { useDragHandler } from '../useDragHandler'
+import { useDragHandler } from './useDragHandler'
 import { useMediaDisplay } from './useMediaDisplay'
 
 // 定义媒体预览选项类型

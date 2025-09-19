@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useState, useMemo } from 'react'
+import { useRef, useEffect, useCallback, useState } from 'react'
 import { cloneSchema, adjustSchemaForSpacing, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
 import type { ImageElement, LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { useRafController } from '@/hooks/useRafController'
