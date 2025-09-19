@@ -1,13 +1,15 @@
 import { useRef, useEffect, useCallback, useState } from 'react'
 import { cloneSchema, adjustSchemaForSpacing, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
 import type { ImageElement, LayoutSchema, MediaObject } from '@/app/mosaic/types'
-import type { MediaTarget } from './types'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import { useRafController } from '@/hooks/useRafController'
+import { mergeRefs } from '@/utils/refs'
 import { useMediaOffset } from './useMediaOffset'
+import { useDragHandler } from '../useDragHandler'
+import type { MediaTarget } from './types'
 
 // 定义媒体预览选项类型
-interface UseMediaPreviewOptions {
+export interface UseMediaPreviewOptions {
   schema?: LayoutSchema
   mediaItems?: MediaObject[]
   setMediaItems?: (mediaItems: MediaObject[] | ((prev: MediaObject[]) => MediaObject[])) => void
@@ -336,8 +338,31 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     },
   })
 
+  const dragOccurredRef = useRef(false)
+  const offsetXRef = useRef<number>(0)
+  const offsetYRef = useRef<number>(0)
+  const { draggerRef } = useDragHandler({
+    schema,
+    onDragStart: (elementIndex) => {
+      dragOccurredRef.current = false
+
+      const offset = getMediaOffset(elementIndex)
+      offsetXRef.current = offset.x
+      offsetYRef.current = offset.y
+    },
+    onDragMove: (elementIndex, offsetX, offsetY) => {
+      dragOccurredRef.current = true
+
+      setMediaOffset(elementIndex, offsetXRef.current + offsetX, offsetYRef.current + offsetY)
+    },
+  })
+
   const select = useCallback(
     async (index: number, file: File) => {
+      if (dragOccurredRef.current) {
+        return
+      }
+
       if (typeof setMediaItems !== 'function') {
         return
       }
@@ -384,5 +409,7 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
     loadAndDrawMedias()
   }, [schema, mediaItems, spacing, padding, containerWidth, canvasWidth, canvasHeight])
 
-  return { canvasRef, select, getMediaOffset, setMediaOffset }
+  const getCanvas = useCallback(() => canvasRef.current, [])
+  const isDragOccurred = useCallback(() => dragOccurredRef.current, [])
+  return { canvasRef: mergeRefs(canvasRef, draggerRef), select, getCanvas, isDragOccurred }
 }

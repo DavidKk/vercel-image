@@ -26,6 +26,8 @@ export function applyElementDefaults(element: Partial<ImageElement>) {
     y: element.y ?? 0,
     width: element.width ?? '100%',
     height: element.height ?? '100%',
+    draggable: element.draggable ?? true,
+    dragDirection: element.dragDirection ?? 'both',
     ...element,
   }
 }

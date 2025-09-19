@@ -20,7 +20,10 @@ export function useMediaOffset(options: UseMediaOffsetOptions = {}) {
   // 验证索引是否有效
   const isValidIndex = useCallback(
     (index: number) => {
-      if (!schema) return false
+      if (!schema) {
+        return false
+      }
+
       return index >= 0 && index < schema.elements.length
     },
     [schema]

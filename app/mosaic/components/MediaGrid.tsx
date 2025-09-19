@@ -1,13 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
 import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
-import { useDragHandler } from '@/app/mosaic/hooks/useDragHandler'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import type { MediaObject, LayoutSchema } from '@/app/mosaic/types'
 
-interface MediaGridProps {
+export interface MediaGridProps {
   schema?: LayoutSchema
   mediaItems?: MediaObject[]
   setMediaItems?: (mediaItems: MediaObject[] | ((prev: MediaObject[]) => MediaObject[])) => void
@@ -18,26 +17,7 @@ interface MediaGridProps {
 export default function MediaGrid(props: MediaGridProps) {
   const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [dragOccurred, setDragOccurred] = useState(false)
-  const { canvasRef, select, getMediaOffset, setMediaOffset } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
-
-  const offsetXRef = useRef<number>(0)
-  const offsetYRef = useRef<number>(0)
-  const { handleMouseDown, handleMouseMove, handleMouseUp, handleMouseLeave } = useDragHandler({
-    schema,
-    onDragStart: (elementIndex) => {
-      setDragOccurred(false)
-
-      const offset = getMediaOffset(elementIndex)
-      offsetXRef.current = offset.x
-      offsetYRef.current = offset.y
-    },
-    onDragMove: (elementIndex, offsetX, offsetY) => {
-      setDragOccurred(true)
-
-      setMediaOffset(elementIndex, offsetXRef.current + offsetX, offsetYRef.current + offsetY)
-    },
-  })
+  const { canvasRef, select, getCanvas, isDragOccurred } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
 
   // 处理文件选择
   const handleFileSelect = (index: number) => {
@@ -120,10 +100,7 @@ export default function MediaGrid(props: MediaGridProps) {
 
   // 通过Canvas点击上传媒体项
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    // 如果发生了拖动，则不处理点击事件
-    if (dragOccurred) {
-      // 重置拖动状态
-      setDragOccurred(false)
+    if (isDragOccurred()) {
       return
     }
 
@@ -131,7 +108,7 @@ export default function MediaGrid(props: MediaGridProps) {
       return
     }
 
-    const canvas = canvasRef.current
+    const canvas = getCanvas()
     if (!canvas) {
       return
     }
@@ -170,15 +147,7 @@ export default function MediaGrid(props: MediaGridProps) {
     <>
       {/* 修改容器类以支持响应式设计，移除固定宽高，使用响应式尺寸 */}
       <div className="mb-6 flex justify-center w-full">
-        <canvas
-          ref={canvasRef}
-          className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200"
-          onClick={handleCanvasClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseLeave}
-        />
+        <canvas ref={canvasRef} className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200" onClick={handleCanvasClick} />
       </div>
 
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,video/*" multiple />
