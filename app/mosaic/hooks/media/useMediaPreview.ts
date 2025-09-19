@@ -1,4 +1,4 @@
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useMemo } from 'react'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
 import { mergeRefs } from '@/utils/refs'
@@ -22,13 +22,13 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
 
   // 添加状态用于触发重新渲染
   const [offsetVersion, setOffsetVersion] = useState(0)
-  
+
   // 媒体偏移处理
   const { getMediaOffset, setMediaOffset, resetMediaOffset } = useMediaOffset({
     schema,
     onUpdate: () => {
       // 媒体偏移更新时，增加版本号以触发重新渲染
-      setOffsetVersion(prev => prev + 1)
+      setOffsetVersion((prev) => prev + 1)
     },
   })
 
@@ -96,5 +96,6 @@ export function useMediaPreview(props: UseMediaPreviewOptions) {
   )
 
   const isDragOccurred = useCallback(() => dragOccurredRef.current, [])
-  return { canvasRef: mergeRefs(displayCanvasRef, draggerRef), select, getCanvas, isDragOccurred }
+  const attachCanvas = useMemo(() => mergeRefs(displayCanvasRef, draggerRef), [])
+  return { attachCanvas, select, getCanvas, isDragOccurred }
 }

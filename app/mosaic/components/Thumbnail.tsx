@@ -1,7 +1,7 @@
 'use client'
 
-import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
 import type { LayoutSchema } from '@/app/mosaic/types'
+import { useMediaDisplay } from '../hooks/media/useMediaDisplay'
 
 export interface ThumbnailProps {
   schema: LayoutSchema
@@ -26,7 +26,7 @@ export function Thumbnail(props: ThumbnailProps) {
     canvasWidth = maxHeight * aspectRatio
   }
 
-  const { canvasRef } = useMediaPreview({
+  const { canvasRef } = useMediaDisplay({
     schema,
     canvasWidth,
     canvasHeight,

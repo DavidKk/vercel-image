@@ -17,7 +17,7 @@ export interface MediaGridProps {
 export default function MediaGrid(props: MediaGridProps) {
   const { schema, mediaItems = [], setMediaItems, spacing, padding } = props
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { canvasRef, select, getCanvas, isDragOccurred } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
+  const { attachCanvas, select, getCanvas, isDragOccurred } = useMediaPreview({ schema, mediaItems, setMediaItems, spacing, padding })
 
   // 处理文件选择
   const handleFileSelect = (index: number) => {
@@ -147,7 +147,7 @@ export default function MediaGrid(props: MediaGridProps) {
     <>
       {/* 修改容器类以支持响应式设计，移除固定宽高，使用响应式尺寸 */}
       <div className="mb-6 flex justify-center w-full">
-        <canvas ref={canvasRef} className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200" onClick={handleCanvasClick} />
+        <canvas ref={attachCanvas} className="w-full max-w-md md:max-w-lg cursor-pointer border border-gray-200" onClick={handleCanvasClick} />
       </div>
 
       <input type="file" ref={fileInputRef} className="hidden" accept="image/*,.heic,video/*" multiple />
