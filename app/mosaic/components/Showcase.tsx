@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
-import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
+import { useMediaDisplay } from '@/app/mosaic/hooks/media/useMediaDisplay'
 import { Spinner } from '@/components/Spinner'
 
 export interface ShowcaseItem {
@@ -30,8 +30,8 @@ export function Showcase(props: ShowcaseProps) {
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null)
   const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // 使用 useMediaPreview 钩子来处理当前媒体预览
-  const { canvasRef } = useMediaPreview({
+  // 使用 useMediaDisplay 钩子来处理当前媒体展示
+  const { canvasRef } = useMediaDisplay({
     schema: items[currentIndex]?.schema,
     mediaItems: items[currentIndex]?.mediaItems,
     canvasWidth,
