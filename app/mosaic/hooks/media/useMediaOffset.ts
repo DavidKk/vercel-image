@@ -1,4 +1,5 @@
-import { useCallback, useRef, useEffect } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
+
 import type { LayoutSchema } from '@/app/mosaic/types'
 
 export type MediaOffset = {

@@ -1,6 +1,7 @@
 'use client'
 
-import React, { useMemo, useId } from 'react'
+import React, { useId, useMemo } from 'react'
+
 import Codemirror, { type CodemirrorProps } from './Codemirror'
 
 export interface ReactEditorProps extends CodemirrorProps {

@@ -1,9 +1,10 @@
-import type { ImageElement, LayoutSchema } from '@/app/mosaic/types'
-import { calculateElementPosition } from '../position'
+import type { ImageElement } from '@/app/mosaic/types'
+
 import { drawMask, drawRoundedRectPath, drawShadow } from '../drawing'
+import { calculateElementPosition } from '../position'
 import { convertPercentageToPixel } from '../utils'
-import { drawMediaCover } from './drawMediaCover'
 import { drawMediaContain } from './drawMediaContain'
+import { drawMediaCover } from './drawMediaCover'
 import { drawMediaFill } from './drawMediaFill'
 
 /**
@@ -60,7 +61,7 @@ export function drawMedia(
   }
 
   // 应用阴影
-  drawShadow(ctx, element, pos.x, pos.y, pos.width, pos.height)
+  drawShadow(ctx, element)
 
   // 应用混合模式
   if (element.blendMode) {

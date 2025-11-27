@@ -1,71 +1,80 @@
-import { drawShadow } from '@/app/mosaic/services/layout/drawing'
-import type { ImageElement } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-describe('drawShadow', () => {
-  let ctx: CanvasRenderingContext2D
-  let canvas: HTMLCanvasElement
+/**
+ * Playwright 版本的 drawShadow 测试
+ */
+test.describe('drawShadow', () => {
+  async function setup(page) {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils?.drawShadow)
+  }
 
-  beforeEach(() => {
-    // 使用 jsdom 环境提供的原生 canvas
-    canvas = document.createElement('canvas')
-    canvas.width = 300
-    canvas.height = 150
-    ctx = canvas.getContext('2d')!
+  test('should not set shadow properties when element has no shadow', async ({ page }) => {
+    await setup(page)
+
+    const result = await page.evaluate(() => {
+      const { drawShadow } = (window as any).__testUtils
+
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+
+      const original = {
+        color: ctx.shadowColor,
+        blur: ctx.shadowBlur,
+        offsetX: ctx.shadowOffsetX,
+        offsetY: ctx.shadowOffsetY,
+      }
+
+      const element = { fit: 'cover' }
+
+      drawShadow(ctx, element, 10, 10, 100, 50)
+
+      return {
+        colorUnchanged: ctx.shadowColor === original.color,
+        blurUnchanged: ctx.shadowBlur === original.blur,
+        offsetXUnchanged: ctx.shadowOffsetX === original.offsetX,
+        offsetYUnchanged: ctx.shadowOffsetY === original.offsetY,
+      }
+    })
+
+    expect(result.colorUnchanged).toBe(true)
+    expect(result.blurUnchanged).toBe(true)
+    expect(result.offsetXUnchanged).toBe(true)
+    expect(result.offsetYUnchanged).toBe(true)
   })
 
-  it('should not set shadow properties when element has no shadow', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-    } as ImageElement
+  test('should set shadow properties when element has shadow', async ({ page }) => {
+    await setup(page)
 
-    // 保存原始的 shadow 值
-    const originalShadowColor = ctx.shadowColor
-    const originalShadowBlur = ctx.shadowBlur
-    const originalShadowOffsetX = ctx.shadowOffsetX
-    const originalShadowOffsetY = ctx.shadowOffsetY
+    const result = await page.evaluate(() => {
+      const { drawShadow } = (window as any).__testUtils
 
-    drawShadow(ctx, element, 10, 10, 100, 50)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
 
-    // 检查 shadow 属性是否未被修改
-    expect(() => {
+      const element = {
+        fit: 'cover',
+        shadow: {
+          x: 5,
+          y: 10,
+          blur: 3,
+          color: '#000000',
+        },
+      }
+
       drawShadow(ctx, element, 10, 10, 100, 50)
-    }).not.toThrow()
 
-    // 恢复原始值
-    ctx.shadowColor = originalShadowColor
-    ctx.shadowBlur = originalShadowBlur
-    ctx.shadowOffsetX = originalShadowOffsetX
-    ctx.shadowOffsetY = originalShadowOffsetY
-  })
+      return {
+        shadowColor: ctx.shadowColor,
+        shadowBlur: ctx.shadowBlur,
+        shadowOffsetX: ctx.shadowOffsetX,
+        shadowOffsetY: ctx.shadowOffsetY,
+      }
+    })
 
-  it('should set shadow properties when element has shadow', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-      shadow: {
-        x: 5,
-        y: 10,
-        blur: 3,
-        color: '#000000',
-      },
-    } as ImageElement
-
-    // 保存原始的 shadow 值
-    const originalShadowColor = ctx.shadowColor
-    const originalShadowBlur = ctx.shadowBlur
-    const originalShadowOffsetX = ctx.shadowOffsetX
-    const originalShadowOffsetY = ctx.shadowOffsetY
-
-    drawShadow(ctx, element, 10, 10, 100, 50)
-
-    // 检查 shadow 属性是否被设置
-    expect(() => {
-      drawShadow(ctx, element, 10, 10, 100, 50)
-    }).not.toThrow()
-
-    // 恢复原始值
-    ctx.shadowColor = originalShadowColor
-    ctx.shadowBlur = originalShadowBlur
-    ctx.shadowOffsetX = originalShadowOffsetX
-    ctx.shadowOffsetY = originalShadowOffsetY
+    expect(result.shadowColor).toBe('#000000')
+    expect(result.shadowBlur).toBe(3)
+    expect(result.shadowOffsetX).toBe(5)
+    expect(result.shadowOffsetY).toBe(10)
   })
 })

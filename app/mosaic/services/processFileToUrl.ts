@@ -1,4 +1,4 @@
-import { isHeicFile, convertHeicFileToUrl } from '@/app/mosaic/services/heicConverter'
+import { convertHeicFileToUrl, isHeicFile } from '@/app/mosaic/services/heicConverter'
 
 export interface ProcessFileToUrlResult {
   fileUrl: string

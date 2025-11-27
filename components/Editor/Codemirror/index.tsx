@@ -1,18 +1,19 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
-import { basicSetup } from 'codemirror'
-import { StateField, EditorState } from '@codemirror/state'
-import { EditorView, Decoration, keymap } from '@codemirror/view'
 import { indentWithTab } from '@codemirror/commands'
-import type { Range } from '@codemirror/state'
-import type { DecorationSet } from '@codemirror/view'
 import { json } from '@codemirror/lang-json'
-import useStorage from './hooks/useStorage'
-import useDrop from './hooks/useDrop'
+import type { Range } from '@codemirror/state'
+import { EditorState, StateField } from '@codemirror/state'
+import type { DecorationSet } from '@codemirror/view'
+import { Decoration, EditorView, keymap } from '@codemirror/view'
+import { basicSetup } from 'codemirror'
+import { useEffect, useMemo, useRef } from 'react'
+
 import Container from './Container'
-import { setEditorValue } from './utils'
 import { foldGutterCustom } from './foldGutterCustom'
+import useDrop from './hooks/useDrop'
+import useStorage from './hooks/useStorage'
+import { setEditorValue } from './utils'
 
 export interface CodemirrorProps {
   value?: string

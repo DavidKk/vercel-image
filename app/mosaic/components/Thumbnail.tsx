@@ -1,6 +1,7 @@
 'use client'
 
 import type { LayoutSchema } from '@/app/mosaic/types'
+
 import { useMediaDisplay } from '../hooks/media/useMediaDisplay'
 
 export interface ThumbnailProps {

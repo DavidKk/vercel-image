@@ -1,5 +1,6 @@
-import { LayoutGridSelect } from './components/LayoutGridSelect'
 import { generate } from '@/components/Meta'
+
+import { LayoutGridSelect } from './components/LayoutGridSelect'
 
 /**
  * 图像合并工具的主页面

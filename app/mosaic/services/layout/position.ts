@@ -1,5 +1,6 @@
 import type { ImageElement, LayoutSchema, Position } from '@/app/mosaic/types'
-import { convertPercentageToPixel, distributeSizes, applyElementDefaults } from './utils'
+
+import { applyElementDefaults, convertPercentageToPixel } from './utils'
 
 /**
  * 计算元素的实际位置和尺寸

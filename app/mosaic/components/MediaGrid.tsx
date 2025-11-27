@@ -1,10 +1,11 @@
 'use client'
 
 import { useRef } from 'react'
-import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
+
 import { useMediaPreview } from '@/app/mosaic/hooks/media/useMediaPreview'
+import { cloneSchema, detectClickPosition } from '@/app/mosaic/services/layout'
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
-import type { MediaObject, LayoutSchema } from '@/app/mosaic/types'
+import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 
 export interface MediaGridProps {
   schema?: LayoutSchema

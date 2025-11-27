@@ -1,78 +1,116 @@
-import { drawPlaceholder } from '@/app/mosaic/services/layout/rendering/drawPlaceholder'
-import type { ImageElement } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-describe('drawPlaceholder', () => {
-  let ctx: CanvasRenderingContext2D
-  let canvas: HTMLCanvasElement
+/**
+ * 将 Jest 测试迁移到 Playwright
+ * 使用真实浏览器的 canvas API
+ */
+test.describe('drawPlaceholder', () => {
+  test('should draw placeholder with default background color', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
 
-  beforeEach(() => {
-    // 使用 jsdom 环境提供的原生 canvas
-    canvas = document.createElement('canvas')
-    canvas.width = 300
-    canvas.height = 150
-    ctx = canvas.getContext('2d')!
-  })
+    const result = await page.evaluate(async () => {
+      const { drawPlaceholder } = (window as any).__testUtils
 
-  it('should draw placeholder with default background color', () => {
-    const element: ImageElement = {
-      x: '10%',
-      y: '10%',
-      width: '80%',
-      height: '80%',
-      fit: 'cover',
-    } as ImageElement
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
 
-    // 保存绘制前的像素数据
-    const imageDataBefore = ctx.getImageData(0, 0, 100, 100)
+      const element = {
+        x: '10%',
+        y: '10%',
+        width: '80%',
+        height: '80%',
+        fit: 'cover',
+      }
 
-    drawPlaceholder(ctx, element, 100, 100)
+      const imageDataBefore = ctx.getImageData(0, 0, 100, 100)
+      const beforeData = Array.from(imageDataBefore.data)
 
-    // 检查绘制后是否有变化
-    const imageDataAfter = ctx.getImageData(0, 0, 100, 100)
-    expect(imageDataBefore).not.toEqual(imageDataAfter)
-  })
-
-  it('should draw placeholder with custom background color', () => {
-    const element: ImageElement = {
-      x: '0%',
-      y: '0%',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#ff0000',
-      fit: 'cover',
-    } as ImageElement
-
-    // 保存原始的 fillStyle 值
-    const originalFillStyle = ctx.fillStyle
-
-    drawPlaceholder(ctx, element, 100, 100)
-
-    // 检查 fillStyle 是否被设置
-    expect(() => {
       drawPlaceholder(ctx, element, 100, 100)
-    }).not.toThrow()
 
-    // 恢复原始值
-    ctx.fillStyle = originalFillStyle
+      const imageDataAfter = ctx.getImageData(0, 0, 100, 100)
+      const afterData = Array.from(imageDataAfter.data)
+
+      return {
+        changed: JSON.stringify(beforeData) !== JSON.stringify(afterData),
+      }
+    })
+
+    expect(result.changed).toBe(true)
   })
 
-  it('should draw placeholder with border radius', () => {
-    const element: ImageElement = {
-      x: '0%',
-      y: '0%',
-      width: '100%',
-      height: '100%',
-      borderRadius: 10,
-      fit: 'cover',
-    } as ImageElement
+  test('should draw placeholder with custom background color', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
 
-    // 保存绘制前的像素数据
-    const imageDataBefore = ctx.getImageData(0, 0, 100, 100)
+    const result = await page.evaluate(async () => {
+      const { drawPlaceholder } = (window as any).__testUtils
 
-    drawPlaceholder(ctx, element, 100, 100)
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
 
-    // 检查绘制后是否有变化
-    const imageDataAfter = ctx.getImageData(0, 0, 100, 100)
-    expect(imageDataBefore).not.toEqual(imageDataAfter)
+      const element = {
+        x: '0%',
+        y: '0%',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#ff0000',
+        fit: 'cover',
+      }
+
+      let error = null
+      try {
+        drawPlaceholder(ctx, element, 100, 100)
+      } catch (e: any) {
+        error = e.message
+      }
+
+      return {
+        noError: error === null,
+      }
+    })
+
+    expect(result.noError).toBe(true)
+  })
+
+  test('should draw placeholder with border radius', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
+
+    const result = await page.evaluate(async () => {
+      const { drawPlaceholder } = (window as any).__testUtils
+
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
+
+      const element = {
+        x: '0%',
+        y: '0%',
+        width: '100%',
+        height: '100%',
+        borderRadius: 10,
+        fit: 'cover',
+      }
+
+      const imageDataBefore = ctx.getImageData(0, 0, 100, 100)
+      const beforeData = Array.from(imageDataBefore.data)
+
+      drawPlaceholder(ctx, element, 100, 100)
+
+      const imageDataAfter = ctx.getImageData(0, 0, 100, 100)
+      const afterData = Array.from(imageDataAfter.data)
+
+      return {
+        changed: JSON.stringify(beforeData) !== JSON.stringify(afterData),
+      }
+    })
+
+    expect(result.changed).toBe(true)
   })
 })

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
+import { useEffect, useRef, useState } from 'react'
+
 import { useMediaDisplay } from '@/app/mosaic/hooks/media/useMediaDisplay'
+import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { Spinner } from '@/components/Spinner'
 
 export interface ShowcaseItem {

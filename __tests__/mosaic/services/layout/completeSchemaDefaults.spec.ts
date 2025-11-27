@@ -1,5 +1,4 @@
 import { completeSchemaDefaults } from '@/app/mosaic/services/layout/schema'
-import type { LayoutSchema } from '@/app/mosaic/types'
 
 describe('completeSchemaDefaults', () => {
   it('should complete defaults for elements in schema', () => {

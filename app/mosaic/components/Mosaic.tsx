@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo } from 'react'
-import { drawBackground, drawMedia, adjustSchemaForSpacing, cloneSchema } from '@/app/mosaic/services/layout'
+import { useCallback, useMemo, useRef, useState } from 'react'
+
 import { useVideoExporter } from '@/app/mosaic/hooks/useVideoExporter'
+import { adjustSchemaForSpacing, cloneSchema, drawBackground, drawMedia } from '@/app/mosaic/services/layout'
 import { getLongestVideoDuration } from '@/app/mosaic/services/video/utils'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
+
 import MediaGrid from './MediaGrid'
 
 export interface MosaicProps {

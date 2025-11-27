@@ -1,6 +1,7 @@
 import type { ImageElement } from '@/app/mosaic/types'
-import { calculateElementPosition } from '../position'
+
 import { drawMask, drawRoundedRectPath } from '../drawing'
+import { calculateElementPosition } from '../position'
 import { convertPercentageToPixel } from '../utils'
 
 /**

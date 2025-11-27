@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useMemo, useRef } from 'react'
-import { keymap } from '@codemirror/view'
-import type { EditorView } from '@codemirror/view'
 import type { Extension } from '@codemirror/state'
+import type { EditorView } from '@codemirror/view'
+import { keymap } from '@codemirror/view'
+import { useCallback, useMemo, useRef } from 'react'
+
 import { getEditorValue, setEditorValue } from '../utils'
 
 const DEFAULT_SAVE_SHORTCUTS = {

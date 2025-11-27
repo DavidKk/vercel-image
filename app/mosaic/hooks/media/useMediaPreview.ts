@@ -1,10 +1,12 @@
-import { useRef, useCallback, useState, useMemo } from 'react'
-import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
+import { useCallback, useMemo, useRef, useState } from 'react'
+
 import { processFileToUrl } from '@/app/mosaic/services/processFileToUrl'
+import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { mergeRefs } from '@/utils/refs'
-import { useMediaOffset } from './useMediaOffset'
+
 import { useDragHandler } from './useDragHandler'
 import { useMediaDisplay } from './useMediaDisplay'
+import { useMediaOffset } from './useMediaOffset'
 
 // 定义媒体预览选项类型
 export interface UseMediaPreviewOptions {

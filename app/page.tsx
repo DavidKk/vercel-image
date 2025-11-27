@@ -1,5 +1,6 @@
-import { Suspense } from 'react'
 import Link from 'next/link'
+import { Suspense } from 'react'
+
 import { MosaicShowcase } from '@/app/mosaic/components/MosaicShowcase'
 import { Spinner } from '@/components/Spinner'
 

@@ -1,168 +1,178 @@
-import { drawShapeMask } from '@/app/mosaic/services/layout/drawing'
-import type { Mask } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-describe('drawShapeMask', () => {
-  let ctx: CanvasRenderingContext2D
-  let canvas: HTMLCanvasElement
+/**
+ * 将 Jest 测试迁移到 Playwright
+ * 测试 drawShapeMask 函数
+ */
+test.describe('drawShapeMask', () => {
+  test('should draw circle mask', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
 
-  beforeEach(() => {
-    // 使用 jsdom 环境提供的原生 canvas
-    canvas = document.createElement('canvas')
-    canvas.width = 300
-    canvas.height = 150
-    ctx = canvas.getContext('2d')!
-  })
+    const result = await page.evaluate(async () => {
+      const { drawShapeMask } = (window as any).__testUtils
 
-  it('should draw circle mask', () => {
-    const mask: Mask = {
-      type: 'shape',
-      shape: 'circle',
-    } as Mask
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
 
-    // 保存原始的 beginPath 和 clip 方法
-    const originalBeginPath = ctx.beginPath
-    const originalClip = ctx.clip
-    let beginPathCalled = false
-    let clipCalled = false
+      const mask = {
+        type: 'shape',
+        shape: 'circle',
+      }
 
-    // 模拟方法以验证是否被调用
-    ctx.beginPath = jest.fn().mockImplementation(function (this: Path2D) {
-      beginPathCalled = true
-      // @ts-ignore
-      return originalBeginPath.apply(this)
-    })
+      // 保存原始的 beginPath 和 clip 方法
+      const originalBeginPath = ctx.beginPath.bind(ctx)
+      const originalClip = ctx.clip.bind(ctx)
+      let beginPathCalled = false
+      let clipCalled = false
 
-    ctx.clip = jest.fn().mockImplementation(function (this: Path2D, path?: Path2D, fillRule?: CanvasFillRule) {
-      clipCalled = true
-      // @ts-ignore
-      return originalClip.apply(this, arguments)
-    })
+      // 模拟方法以验证是否被调用
+      ctx.beginPath = function (this: CanvasRenderingContext2D) {
+        beginPathCalled = true
+        return originalBeginPath.call(this)
+      }
 
-    drawShapeMask(ctx, mask, 10, 10, 100, 50)
+      ctx.clip = function (this: CanvasRenderingContext2D) {
+        clipCalled = true
+        return originalClip.call(this)
+      }
 
-    expect(beginPathCalled).toBe(true)
-    expect(clipCalled).toBe(true)
-
-    // 恢复原始方法
-    ctx.beginPath = originalBeginPath
-    ctx.clip = originalClip
-  })
-
-  it('should handle rect mask (no operation)', () => {
-    const mask: Mask = {
-      type: 'shape',
-      shape: 'rect',
-    } as Mask
-
-    // 保存原始的 beginPath 和 clip 方法
-    const originalBeginPath = ctx.beginPath
-    const originalClip = ctx.clip
-    let beginPathCalled = false
-    let clipCalled = false
-
-    // 模拟方法以验证是否被调用
-    ctx.beginPath = jest.fn().mockImplementation(function (this: Path2D) {
-      beginPathCalled = true
-      // @ts-ignore
-      return originalBeginPath.apply(this)
-    })
-
-    ctx.clip = jest.fn().mockImplementation(function (this: Path2D, path?: Path2D, fillRule?: CanvasFillRule) {
-      clipCalled = true
-      // @ts-ignore
-      return originalClip.apply(this, arguments)
-    })
-
-    drawShapeMask(ctx, mask, 10, 10, 100, 50)
-
-    // 对于矩形遮罩，不应该调用 beginPath 和 clip
-    // 注意：这里我们无法直接验证，因为函数内部可能有优化逻辑
-    expect(() => {
       drawShapeMask(ctx, mask, 10, 10, 100, 50)
-    }).not.toThrow()
 
-    // 恢复原始方法
-    ctx.beginPath = originalBeginPath
-    ctx.clip = originalClip
+      // 恢复原始方法
+      ctx.beginPath = originalBeginPath
+      ctx.clip = originalClip
+
+      return {
+        beginPathCalled,
+        clipCalled,
+      }
+    })
+
+    expect(result.beginPathCalled).toBe(true)
+    expect(result.clipCalled).toBe(true)
   })
 
-  it('should draw polygon mask', () => {
-    const mask: Mask = {
-      type: 'shape',
-      shape: 'polygon',
-      polygonPoints: [
-        { x: '0%', y: '0%' },
-        { x: '100%', y: '0%' },
-        { x: '100%', y: '100%' },
-        { x: '0%', y: '100%' },
-      ],
-    } as Mask
+  test('should handle rect mask (no operation)', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
 
-    // 保存原始的 beginPath 和 clip 方法
-    const originalBeginPath = ctx.beginPath
-    const originalClip = ctx.clip
-    let beginPathCalled = false
-    let clipCalled = false
+    const result = await page.evaluate(async () => {
+      const { drawShapeMask } = (window as any).__testUtils
 
-    // 模拟方法以验证是否被调用
-    ctx.beginPath = jest.fn().mockImplementation(function (this: Path2D) {
-      beginPathCalled = true
-      // @ts-ignore
-      return originalBeginPath.apply(this)
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
+
+      const mask = {
+        type: 'shape',
+        shape: 'rect',
+      }
+
+      let error = null
+      try {
+        drawShapeMask(ctx, mask, 10, 10, 100, 50)
+      } catch (e: any) {
+        error = e.message
+      }
+
+      return {
+        noError: error === null,
+      }
     })
 
-    ctx.clip = jest.fn().mockImplementation(function (this: Path2D, path?: Path2D, fillRule?: CanvasFillRule) {
-      clipCalled = true
-      // @ts-ignore
-      return originalClip.apply(this, arguments)
-    })
-
-    drawShapeMask(ctx, mask, 10, 10, 100, 50)
-
-    expect(beginPathCalled).toBe(true)
-    expect(clipCalled).toBe(true)
-
-    // 恢复原始方法
-    ctx.beginPath = originalBeginPath
-    ctx.clip = originalClip
+    expect(result.noError).toBe(true)
   })
 
-  it('should handle polygon mask with no points', () => {
-    const mask: Mask = {
-      type: 'shape',
-      shape: 'polygon',
-      polygonPoints: [],
-    } as Mask
+  test('should draw polygon mask', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
 
-    // 保存原始的 beginPath 和 clip 方法
-    const originalBeginPath = ctx.beginPath
-    const originalClip = ctx.clip
-    let beginPathCalled = false
-    let clipCalled = false
+    const result = await page.evaluate(async () => {
+      const { drawShapeMask } = (window as any).__testUtils
 
-    // 模拟方法以验证是否被调用
-    ctx.beginPath = jest.fn().mockImplementation(function (this: Path2D) {
-      beginPathCalled = true
-      // @ts-ignore
-      return originalBeginPath.apply(this)
-    })
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
 
-    ctx.clip = jest.fn().mockImplementation(function (this: Path2D, path?: Path2D, fillRule?: CanvasFillRule) {
-      clipCalled = true
-      // @ts-ignore
-      return originalClip.apply(this, arguments)
-    })
+      const mask = {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [
+          { x: '0%', y: '0%' },
+          { x: '100%', y: '0%' },
+          { x: '100%', y: '100%' },
+          { x: '0%', y: '100%' },
+        ],
+      }
 
-    drawShapeMask(ctx, mask, 10, 10, 100, 50)
+      // 保存原始的 beginPath 和 clip 方法
+      const originalBeginPath = ctx.beginPath.bind(ctx)
+      const originalClip = ctx.clip.bind(ctx)
+      let beginPathCalled = false
+      let clipCalled = false
 
-    // 对于没有点的多边形，不应该调用 beginPath 和 clip
-    // 注意：这里我们无法直接验证，因为函数内部可能有优化逻辑
-    expect(() => {
+      // 模拟方法以验证是否被调用
+      ctx.beginPath = function (this: CanvasRenderingContext2D) {
+        beginPathCalled = true
+        return originalBeginPath.call(this)
+      }
+
+      ctx.clip = function (this: CanvasRenderingContext2D) {
+        clipCalled = true
+        return originalClip.call(this)
+      }
+
       drawShapeMask(ctx, mask, 10, 10, 100, 50)
-    }).not.toThrow()
 
-    // 恢复原始方法
-    ctx.beginPath = originalBeginPath
-    ctx.clip = originalClip
+      // 恢复原始方法
+      ctx.beginPath = originalBeginPath
+      ctx.clip = originalClip
+
+      return {
+        beginPathCalled,
+        clipCalled,
+      }
+    })
+
+    expect(result.beginPathCalled).toBe(true)
+    expect(result.clipCalled).toBe(true)
+  })
+
+  test('should handle polygon mask with no points', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils !== undefined)
+
+    const result = await page.evaluate(async () => {
+      const { drawShapeMask } = (window as any).__testUtils
+
+      const canvas = document.createElement('canvas')
+      canvas.width = 300
+      canvas.height = 150
+      const ctx = canvas.getContext('2d')!
+
+      const mask = {
+        type: 'shape',
+        shape: 'polygon',
+        polygonPoints: [],
+      }
+
+      let error = null
+      try {
+        drawShapeMask(ctx, mask, 10, 10, 100, 50)
+      } catch (e: any) {
+        error = e.message
+      }
+
+      return {
+        noError: error === null,
+      }
+    })
+
+    expect(result.noError).toBe(true)
   })
 })

@@ -1,5 +1,6 @@
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { formatBytes } from '@/utils/size'
+
 import { drawMedia } from '../layout'
 
 /**
@@ -136,7 +137,7 @@ function createMediaRecorderPromise(stream: MediaStream, duration: number, suppo
     }
 
     // 错误处理
-    mediaRecorder.onerror = (e) => {
+    mediaRecorder.onerror = () => {
       reject(new Error('Media recorder error'))
     }
 

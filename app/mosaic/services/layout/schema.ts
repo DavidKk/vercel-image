@@ -1,4 +1,4 @@
-import type { LayoutSchema, ImageElement } from '@/app/mosaic/types'
+import type { ImageElement, LayoutSchema } from '@/app/mosaic/types'
 
 /**
  * 补充元素的默认值，确保所有必需的属性都有值

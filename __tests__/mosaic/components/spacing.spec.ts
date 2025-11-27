@@ -117,7 +117,6 @@ describe('adjustSchemaForSpacing', () => {
     const element2 = result.elements[1]
 
     // With 5% spacing, scale factor should be 0.95
-    const scaleFactor = 0.95
 
     // First element (centered origin)
     expect(element1.width).toBe('47.5%') // 50% * 0.95

@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+
 import { Showcase } from '@/app/mosaic/components/Showcase'
 import { fetchSchemas } from '@/app/mosaic/schema'
-import type { MediaObject, LayoutSchema } from '@/app/mosaic/types'
+import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 
 // 示例媒体数据
 const sampleMediaItems: MediaObject[] = [

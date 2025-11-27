@@ -1,6 +1,7 @@
 import { generate } from '@/components/Meta'
-import SchemaEditor from './SchemaEditor'
+
 import { fetchSchema } from '../schema'
+import SchemaEditor from './SchemaEditor'
 
 const { generateMetadata, metaProps } = generate({
   title: 'Schema Editor - Image Merger Tool',

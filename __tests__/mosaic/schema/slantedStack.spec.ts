@@ -4,7 +4,7 @@ import { adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
 describe('slantedStack schema', () => {
   test('should have horizontal spacingDirection for all elements', () => {
     // 验证所有元素都有 horizontal spacingDirection
-    slantedStack.elements.forEach((element, index) => {
+    slantedStack.elements.forEach((element) => {
       expect(element.spacingDirection).toBe('horizontal')
       expect(element.height).toBe('100%')
     })
@@ -15,7 +15,7 @@ describe('slantedStack schema', () => {
     const adjustedSchema = adjustSchemaForSpacing({ schema: slantedStack, spacing: 2 })
 
     // 验证所有元素的高度仍然保持 100%
-    adjustedSchema.elements.forEach((element, index) => {
+    adjustedSchema.elements.forEach((element) => {
       expect(element.height).toBe('100%')
       expect(element.spacingDirection).toBe('horizontal')
     })

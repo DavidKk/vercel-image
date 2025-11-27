@@ -1,5 +1,5 @@
-import { adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
 import { grid } from '@/app/mosaic/schema/grid'
+import { adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
 
 describe('Thumbnail component spacing', () => {
   it('should use schema default spacing when rendering thumbnails', () => {

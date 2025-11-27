@@ -1,4 +1,4 @@
-import { formatBytes, B, KB, MB, GB, TB } from '@/utils/size'
+import { B, formatBytes, GB, KB, MB, TB } from '@/utils/size'
 
 describe('formatBytes', () => {
   it('should format bytes correctly', () => {

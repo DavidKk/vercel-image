@@ -1,5 +1,5 @@
-import { adjustSchemaForSpacing, adjustElementForSpacing } from '@/app/mosaic/services/layout/spacing'
-import type { LayoutSchema, ImageElement } from '@/app/mosaic/types'
+import { adjustElementForSpacing, adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
+import type { ImageElement, LayoutSchema } from '@/app/mosaic/types'
 
 describe('adjustSchemaForSpacing with element spacingDirection', () => {
   test('should scale both dimensions when element spacingDirection is both (default)', () => {

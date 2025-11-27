@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation'
+
 import Mosaic from '@/app/mosaic/components/Mosaic'
 import { fetchSchema } from '@/app/mosaic/schema'
 import { generate } from '@/components/Meta'

@@ -1,88 +1,90 @@
-import { drawMask } from '@/app/mosaic/services/layout/drawing'
-import type { ImageElement } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-describe('drawMask', () => {
-  let ctx: CanvasRenderingContext2D
-  let canvas: HTMLCanvasElement
+/**
+ * Playwright 版本的 drawMask 测试
+ */
+test.describe('drawMask', () => {
+  async function setup(page) {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils?.drawMask)
+  }
 
-  beforeEach(() => {
-    // 使用 jsdom 环境提供的原生 canvas
-    canvas = document.createElement('canvas')
-    canvas.width = 300
-    canvas.height = 150
-    ctx = canvas.getContext('2d')!
-  })
+  test('should not draw mask when element has no mask', async ({ page }) => {
+    await setup(page)
 
-  it('should not draw mask when element has no mask', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-    } as ImageElement
+    const result = await page.evaluate(() => {
+      const { drawMask } = (window as any).__testUtils
 
-    // 保存原始的 clip 方法
-    const originalClip = ctx.clip
-    let clipCalled = false
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
 
-    // 模拟 clip 方法以验证是否被调用
-    ctx.clip = jest.fn().mockImplementation(() => {
-      clipCalled = true
+      let clipCalled = false
+      const originalClip = ctx.clip.bind(ctx)
+      ctx.clip = function (...args: any[]) {
+        clipCalled = true
+        return originalClip(...args)
+      }
+
+      const element = { fit: 'cover' }
+      drawMask(ctx, element, 10, 10, 100, 50)
+
+      return { clipCalled }
     })
 
-    drawMask(ctx, element, 10, 10, 100, 50)
-
-    expect(clipCalled).toBe(false)
-
-    // 恢复原始方法
-    ctx.clip = originalClip
+    expect(result.clipCalled).toBe(false)
   })
 
-  it('should not draw mask when mask type is not shape', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-      mask: {
-        type: 'image',
-      },
-    } as ImageElement
+  test('should not draw mask when mask type is not shape', async ({ page }) => {
+    await setup(page)
 
-    // 保存原始的 clip 方法
-    const originalClip = ctx.clip
-    let clipCalled = false
+    const result = await page.evaluate(() => {
+      const { drawMask } = (window as any).__testUtils
 
-    // 模拟 clip 方法以验证是否被调用
-    ctx.clip = jest.fn().mockImplementation(() => {
-      clipCalled = true
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+
+      let clipCalled = false
+      ctx.clip = function () {
+        clipCalled = true
+      }
+
+      const element = {
+        fit: 'cover',
+        mask: { type: 'image' },
+      }
+
+      drawMask(ctx, element, 10, 10, 100, 50)
+
+      return { clipCalled }
     })
 
-    drawMask(ctx, element, 10, 10, 100, 50)
-
-    expect(clipCalled).toBe(false)
-
-    // 恢复原始方法
-    ctx.clip = originalClip
+    expect(result.clipCalled).toBe(false)
   })
 
-  it('should call drawShapeMask when mask type is shape', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-      mask: {
-        type: 'shape',
-        shape: 'circle',
-      },
-    } as ImageElement
+  test('should call drawShapeMask when mask type is shape', async ({ page }) => {
+    await setup(page)
 
-    // 保存原始的 clip 方法
-    const originalClip = ctx.clip
-    let clipCalled = false
+    const result = await page.evaluate(() => {
+      const { drawMask } = (window as any).__testUtils
 
-    // 模拟 clip 方法以验证是否被调用
-    ctx.clip = jest.fn().mockImplementation(() => {
-      clipCalled = true
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
+
+      let clipCalled = false
+      ctx.clip = function () {
+        clipCalled = true
+      }
+
+      const element = {
+        fit: 'cover',
+        mask: { type: 'shape', shape: 'circle' },
+      }
+
+      drawMask(ctx, element, 10, 10, 100, 50)
+
+      return { clipCalled }
     })
 
-    drawMask(ctx, element, 10, 10, 100, 50)
-
-    expect(clipCalled).toBe(true)
-
-    // 恢复原始方法
-    ctx.clip = originalClip
+    expect(result.clipCalled).toBe(true)
   })
 })

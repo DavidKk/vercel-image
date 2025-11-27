@@ -1,7 +1,7 @@
 'use client'
 
-import { GutterMarker } from '@codemirror/view'
 import { foldGutter } from '@codemirror/language'
+import { GutterMarker } from '@codemirror/view'
 
 class CustomFoldMarker extends GutterMarker {
   constructor(readonly expanded: boolean) {

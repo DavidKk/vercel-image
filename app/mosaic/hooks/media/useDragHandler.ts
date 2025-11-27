@@ -1,5 +1,6 @@
-import { useRef, useCallback, useEffect, useState } from 'react'
-import { detectClickPosition, cloneSchema } from '@/app/mosaic/services/layout'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { cloneSchema, detectClickPosition } from '@/app/mosaic/services/layout'
 import type { LayoutSchema } from '@/app/mosaic/types'
 
 export type DragHandler = (elementIndex: number, offsetX: number, offsetY: number) => void

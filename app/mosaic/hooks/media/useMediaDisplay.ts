@@ -1,7 +1,9 @@
-import { useRef, useEffect, useCallback, useState } from 'react'
-import { cloneSchema, adjustSchemaForSpacing, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { adjustSchemaForSpacing, cloneSchema, drawBackground, drawMedia, drawPlaceholder } from '@/app/mosaic/services/layout'
 import type { ImageElement, LayoutSchema, MediaObject } from '@/app/mosaic/types'
 import { useRafController } from '@/hooks/useRafController'
+
 import type { MediaTarget } from './types'
 
 // 定义媒体展示选项类型

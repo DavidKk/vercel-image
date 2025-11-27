@@ -1,5 +1,6 @@
-import { drawBackground, drawMedia, drawPlaceholder } from '../layout'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
+
+import { drawBackground, drawMedia, drawPlaceholder } from '../layout'
 
 /**
  * 初始化离屏 Canvas
@@ -71,7 +72,7 @@ export async function renderOffscreenContent(
       // 将视频元素与索引关联
       videoElementMap.set(`video-${i}`, video)
 
-      const promise = new Promise<void>((resolve, reject) => {
+      const promise = new Promise<void>((resolve) => {
         video.onloadeddata = async () => {
           try {
             // 确保视频尺寸已设置
@@ -136,7 +137,7 @@ export async function renderOffscreenContent(
       const img = new Image()
       img.crossOrigin = 'anonymous'
 
-      const promise = new Promise<void>((resolve, reject) => {
+      const promise = new Promise<void>((resolve) => {
         img.onload = () => {
           // 保存上下文状态
           ctx.save()

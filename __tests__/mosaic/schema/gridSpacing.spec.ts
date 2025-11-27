@@ -1,5 +1,5 @@
-import { adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
 import { grid } from '@/app/mosaic/schema/grid'
+import { adjustSchemaForSpacing } from '@/app/mosaic/services/layout/spacing'
 
 describe('Grid schema spacing', () => {
   it('should use grid schema default spacing value of 2', () => {

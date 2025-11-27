@@ -1,4 +1,5 @@
 import type { ImageElement, Mask } from '@/app/mosaic/types'
+
 import { convertPercentageToPixel } from './utils'
 
 /**
@@ -98,7 +99,7 @@ export function drawMask(ctx: CanvasRenderingContext2D, element: ImageElement, x
  * @param width 宽度
  * @param height 高度
  */
-export function drawShadow(ctx: CanvasRenderingContext2D, element: ImageElement, x: number, y: number, width: number, height: number) {
+export function drawShadow(ctx: CanvasRenderingContext2D, element: ImageElement) {
   if (!element.shadow) {
     return
   }

@@ -1,24 +1,45 @@
-describe('DOM functionality', () => {
-  it('should have access to document object', () => {
-    // 简单测试确保我们有访问 document 对象的能力
-    expect(document).toBeDefined()
-    expect(typeof document.createElement).toBe('function')
+import { expect, test } from '@playwright/test'
+
+test.describe('Canvas functionality', () => {
+  test('should have access to document object', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+
+    const hasDocument = await page.evaluate(() => {
+      return typeof document !== 'undefined' && typeof document.createElement === 'function'
+    })
+
+    expect(hasDocument).toBe(true)
   })
 
-  it('should be able to create canvas element', () => {
-    // 测试创建 canvas 元素
-    const canvas = document.createElement('canvas')
-    expect(canvas).toBeDefined()
-    // 注意：使用 canvas 包时，canvas 对象是 Canvas 类型而不是 HTMLCanvasElement
+  test('should be able to create canvas element', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+
+    const canvasInfo = await page.evaluate(() => {
+      const canvas = document.createElement('canvas')
+      return {
+        defined: canvas !== null,
+        hasGetContext: typeof canvas.getContext === 'function',
+      }
+    })
+
+    expect(canvasInfo.defined).toBe(true)
+    expect(canvasInfo.hasGetContext).toBe(true)
   })
 
-  it('should be able to set canvas dimensions', () => {
-    // 测试设置 canvas 尺寸
-    const canvas = document.createElement('canvas') as HTMLCanvasElement
-    canvas.width = 600
-    canvas.height = 400
+  test('should be able to set canvas dimensions', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
 
-    expect(canvas.width).toBe(600)
-    expect(canvas.height).toBe(400)
+    const dimensions = await page.evaluate(() => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 600
+      canvas.height = 400
+      return {
+        width: canvas.width,
+        height: canvas.height,
+      }
+    })
+
+    expect(dimensions.width).toBe(600)
+    expect(dimensions.height).toBe(400)
   })
 })

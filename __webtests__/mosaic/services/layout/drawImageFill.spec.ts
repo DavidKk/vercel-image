@@ -1,49 +1,48 @@
-import { drawMediaFill } from '@/app/mosaic/services/layout/rendering/drawMediaFill'
-import type { ImageElement } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-// Mock Canvas API
-class MockCanvasRenderingContext2D {
-  drawImageCalls: any[] = []
+/**
+ * Playwright 版本的 drawMediaFill 测试
+ */
+test.describe('drawMediaFill', () => {
+  test('should draw image with fill fit (stretch to fill)', async ({ page }) => {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils?.drawMediaFill)
 
-  drawImage(...args: any[]) {
-    this.drawImageCalls.push(args)
-  }
-}
+    const result = await page.evaluate(() => {
+      const { drawMediaFill } = (window as any).__testUtils
 
-describe('drawMediaFill', () => {
-  let ctx: any
-  let img: any
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
 
-  beforeEach(() => {
-    ctx = new MockCanvasRenderingContext2D()
-    // 使用 jsdom 环境提供的原生 HTMLImageElement
-    img = new window.Image()
-    img.width = 100
-    img.height = 50
-    global.CanvasRenderingContext2D = class {} as any
-  })
+      const drawImageCalls: any[] = []
+      ctx.drawImage = function (...args: any[]) {
+        drawImageCalls.push(args)
+      }
 
-  it('should draw image with fill fit (stretch to fill)', () => {
-    const element: ImageElement = {
-      fit: 'fill',
-    } as ImageElement
+      const img = new Image()
+      img.width = 100
+      img.height = 50
 
-    const pos = {
-      x: 10,
-      y: 20,
-      width: 80,
-      height: 60,
-    }
+      const element = { fit: 'fill' }
+      const pos = { x: 10, y: 20, width: 80, height: 60 }
 
-    drawMediaFill(ctx, img, element, pos)
+      drawMediaFill(ctx, img, element, pos)
 
-    // Should stretch image to fill the entire area
-    expect(ctx.drawImageCalls.length).toBe(1)
-    const call = ctx.drawImageCalls[0]
-    expect(call[0]).toBe(img) // Source image
-    expect(call[1]).toBe(10) // destX
-    expect(call[2]).toBe(20) // destY
-    expect(call[3]).toBe(80) // destWidth
-    expect(call[4]).toBe(60) // destHeight
+      const [call] = drawImageCalls
+      return {
+        calls: drawImageCalls.length,
+        destX: call[1],
+        destY: call[2],
+        destWidth: call[3],
+        destHeight: call[4],
+        imageWidth: img.width,
+      }
+    })
+
+    expect(result.calls).toBe(1)
+    expect(result.destX).toBe(10)
+    expect(result.destY).toBe(20)
+    expect(result.destWidth).toBe(80)
+    expect(result.destHeight).toBe(60)
   })
 })

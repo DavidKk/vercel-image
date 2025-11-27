@@ -1,5 +1,4 @@
 import type { ImageElement } from '@/app/mosaic/types'
-import { drawMask, drawRoundedRectPath } from '../drawing'
 
 /**
  * 绘制 cover 模式的媒体

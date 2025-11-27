@@ -1,73 +1,98 @@
-import { drawMedia } from '@/app/mosaic/services/layout/rendering/drawMedia'
-import type { ImageElement } from '@/app/mosaic/types'
+import { expect, test } from '@playwright/test'
 
-// Mock Canvas API
-class MockCanvasRenderingContext2D {
-  drawImageCalls: any[] = []
-  saveCalls = 0
-  restoreCalls = 0
-  globalAlpha = 1
-  globalCompositeOperation = 'source-over'
-
-  drawImage(...args: any[]) {
-    this.drawImageCalls.push(args)
+/**
+ * Playwright 版本的 drawMedia 多次调用测试
+ */
+test.describe('drawMedia multiple times', () => {
+  async function setup(page) {
+    await page.goto('/test-utils/canvas-test')
+    await page.waitForFunction(() => (window as any).__testUtils?.drawMedia)
   }
 
-  save() {
-    this.saveCalls++
-  }
+  test('should be able to draw the same image multiple times', async ({ page }) => {
+    await setup(page)
 
-  restore() {
-    this.restoreCalls++
-  }
-}
+    const result = await page.evaluate(() => {
+      const { drawMedia } = (window as any).__testUtils
 
-describe('drawMedia multiple times', () => {
-  let ctx: any
-  let img: any
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
 
-  beforeEach(() => {
-    ctx = new MockCanvasRenderingContext2D()
-    // 使用 jsdom 环境提供的原生 HTMLImageElement
-    img = new window.Image()
-    img.width = 100
-    img.height = 100
-    global.CanvasRenderingContext2D = class {} as any
+      const drawImageCalls: any[] = []
+      ctx.drawImage = function (...args: any[]) {
+        drawImageCalls.push(args)
+      }
+
+      const saveRestoreLog: string[] = []
+      ctx.save = function () {
+        saveRestoreLog.push('save')
+      }
+      ctx.restore = function () {
+        saveRestoreLog.push('restore')
+      }
+
+      const img = new Image()
+      img.width = 100
+      img.height = 100
+
+      const element = { fit: 'cover' }
+
+      drawMedia(ctx, img, element, 200, 200, 0)
+      drawMedia(ctx, img, element, 200, 200, 0)
+
+      return {
+        drawCallCount: drawImageCalls.length,
+        firstImageMatch: drawImageCalls[0][0] === img,
+        secondImageMatch: drawImageCalls[1][0] === img,
+        log: saveRestoreLog,
+      }
+    })
+
+    expect(result.drawCallCount).toBe(2)
+    expect(result.firstImageMatch).toBe(true)
+    expect(result.secondImageMatch).toBe(true)
+    expect(result.log.filter((x) => x === 'save').length).toBeGreaterThan(0)
+    expect(result.log.filter((x) => x === 'restore').length).toBeGreaterThan(0)
   })
 
-  it('should be able to draw the same image multiple times', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-    } as ImageElement
+  test('should save and restore context for each draw with effects', async ({ page }) => {
+    await setup(page)
 
-    // First draw
-    drawMedia(ctx, img, element, 200, 200, 0)
+    const result = await page.evaluate(() => {
+      const { drawMedia } = (window as any).__testUtils
 
-    // Second draw of the same image
-    drawMedia(ctx, img, element, 200, 200, 0)
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')!
 
-    // Should have drawn the image twice
-    expect(ctx.drawImageCalls.length).toBe(2)
+      const saveCalls: string[] = []
+      ctx.save = function () {
+        saveCalls.push('save')
+      }
+      const restoreCalls: string[] = []
+      ctx.restore = function () {
+        restoreCalls.push('restore')
+      }
 
-    // Both calls should use the same image
-    expect(ctx.drawImageCalls[0][0]).toBe(img)
-    expect(ctx.drawImageCalls[1][0]).toBe(img)
-  })
+      const img = new Image()
+      img.width = 100
+      img.height = 100
 
-  it('should properly save and restore context state for each draw', () => {
-    const element: ImageElement = {
-      fit: 'cover',
-      opacity: 0.5,
-      blendMode: 'multiply',
-    } as ImageElement
+      const element = {
+        fit: 'cover',
+        opacity: 0.5,
+        blendMode: 'multiply',
+      }
 
-    // Draw the same image twice
-    drawMedia(ctx, img, element, 200, 200, 0)
-    drawMedia(ctx, img, element, 200, 200, 0)
+      drawMedia(ctx, img, element, 200, 200, 0)
+      drawMedia(ctx, img, element, 200, 200, 0)
 
-    // Should save and restore context for each draw
-    // Each drawMedia call should save and restore once
-    expect(ctx.saveCalls).toBe(2)
-    expect(ctx.restoreCalls).toBe(2)
+      return {
+        saveCount: saveCalls.length,
+        restoreCount: restoreCalls.length,
+      }
+    })
+
+    expect(result.saveCount).toBe(2)
+    expect(result.restoreCount).toBe(2)
   })
 })

@@ -1,10 +1,10 @@
-import { grid } from './grid'
-import { verticalStack } from './verticalStack'
-import { horizontalStack } from './horizontalStack'
-import { slantedStack } from './slantedStack'
-import { collage } from './collage'
-import { parallelogram } from './parallelogram'
 import { cloneSchema, completeSchemaDefaults } from '../services/layout'
+import { collage } from './collage'
+import { grid } from './grid'
+import { horizontalStack } from './horizontalStack'
+import { parallelogram } from './parallelogram'
+import { slantedStack } from './slantedStack'
+import { verticalStack } from './verticalStack'
 
 const layoutSchemas = { grid, verticalStack, horizontalStack, slantedStack, collage, parallelogram }
 export const SCHEMA_IDS = Object.keys(layoutSchemas) as SchemaId[]

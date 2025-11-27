@@ -1,7 +1,8 @@
 import { useCallback } from 'react'
+
 import { cloneSchema } from '@/app/mosaic/services/layout'
 import { downloadCanvasAsVideo } from '@/app/mosaic/services/video/exporter'
-import { initOffscreenCanvas, renderOffscreenContent, cleanupVideoElements } from '@/app/mosaic/services/video/renderer'
+import { cleanupVideoElements, initOffscreenCanvas, renderOffscreenContent } from '@/app/mosaic/services/video/renderer'
 import type { LayoutSchema, MediaObject } from '@/app/mosaic/types'
 
 /**
@@ -27,7 +28,7 @@ export function useVideoExporter() {
     fullLayoutSchema.canvasHeight = canvasHeight
 
     // 初始化离屏 Canvas
-    const { canvas, ctx } = initOffscreenCanvas(canvasWidth, canvasHeight)
+    const { ctx } = initOffscreenCanvas(canvasWidth, canvasHeight)
 
     // 创建视频元素映射
     let videoElementMap: Map<string, HTMLVideoElement> | null = null

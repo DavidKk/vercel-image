@@ -1,5 +1,5 @@
 import { completeElementDefaults, completeSchemaDefaults } from '@/app/mosaic/services/layout/schema'
-import type { LayoutSchema, ImageElement } from '@/app/mosaic/types'
+import type { ImageElement, LayoutSchema } from '@/app/mosaic/types'
 
 describe('completeElementDefaults', () => {
   test('should add default spacingDirection when not provided', () => {

@@ -1,5 +1,6 @@
-import type { LayoutSchema, ImageElement } from '@/app/mosaic/types'
-import { cloneSchema, applyElementDefaults } from './utils'
+import type { ImageElement, LayoutSchema } from '@/app/mosaic/types'
+
+import { applyElementDefaults, cloneSchema } from './utils'
 
 // 定义一个类型，表示经过调整后的元素，其中 x, y, width, height 是必需的
 interface AdjustedElement extends Omit<ImageElement, 'x' | 'y' | 'width' | 'height'> {

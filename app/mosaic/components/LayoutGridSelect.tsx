@@ -1,9 +1,11 @@
 'use client'
 
-import Link from 'next/link'
 import { useRequest } from 'ahooks'
+import Link from 'next/link'
+
 import { fetchSchemas } from '@/app/mosaic/schema'
 import { Spinner } from '@/components/Spinner'
+
 import { Thumbnail } from './Thumbnail'
 
 export function LayoutGridSelect() {

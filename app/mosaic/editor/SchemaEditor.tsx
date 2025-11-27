@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import type { LayoutSchema } from '@/app/mosaic/types'
+
 import { Thumbnail } from '@/app/mosaic/components/Thumbnail'
+import type { LayoutSchema } from '@/app/mosaic/types'
 import ReactEditor from '@/components/Editor/ReactEditor'
 
 export interface SchemaEidtorProps {

@@ -1,7 +1,8 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
 import type { EditorView } from '@codemirror/view'
+import { useCallback, useEffect, useState } from 'react'
+
 import { setEditorValue } from '../utils'
 
 export interface UseDropOptions {
