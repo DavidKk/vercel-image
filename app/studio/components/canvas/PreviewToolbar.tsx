@@ -10,7 +10,7 @@ import { useEffect } from 'react'
 import { Tooltip } from '@/components/Tooltip'
 
 import { useStudio } from '../../context/StudioContext'
-import { getVisibleOperationTabs } from './operation-tabs'
+import { getDefaultOperationTab, getVisibleOperationTabs } from './operation-tabs'
 
 /**
  * Operation navigation toolbar floating over the preview area
@@ -21,9 +21,10 @@ export function PreviewToolbar() {
   const visibleTabs = getVisibleOperationTabs(selectedAssets)
 
   useEffect(() => {
-    const visibleTabValues = new Set(getVisibleOperationTabs(selectedAssets).map((tab) => tab.value))
+    const tabs = getVisibleOperationTabs(selectedAssets)
+    const visibleTabValues = new Set(tabs.map((tab) => tab.value))
     if (!visibleTabValues.has(activeTab)) {
-      setActiveTab('remove-background')
+      setActiveTab(getDefaultOperationTab(selectedAssets))
     }
   }, [activeTab, selectedAssets, setActiveTab])
 

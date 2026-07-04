@@ -19,7 +19,10 @@ export const STUDIO_SELECT_MENU_CLASS =
   'custom-scroll max-h-56 overflow-y-auto rounded-studio-md border border-[var(--studio-surface-border,#e4e4e7)] bg-white bg-[var(--studio-surface-bg,#ffffff)] py-1 shadow-studio-pop'
 
 /** Custom range slider root styling */
-export const STUDIO_SLIDER_CLASS = 'relative w-full select-none outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-ring)]'
+export const STUDIO_SLIDER_CLASS = 'relative w-full min-w-0 select-none outline-none focus-visible:rounded focus-visible:ring-2 focus-visible:ring-[var(--studio-accent-ring)]'
+
+/** Native range input with Studio track and thumb styling */
+export const STUDIO_RANGE_INPUT_CLASS = 'studio-range-input block w-full min-w-0'
 
 /** Form field label */
 export const STUDIO_FIELD_LABEL_CLASS = 'mb-1 block text-xs font-medium text-[var(--studio-surface-fg-muted)]'

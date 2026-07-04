@@ -14,10 +14,11 @@ import {
   buildImageAssetInput,
   buildVideoAssetInput,
   getAssetObjectUrl,
+  isFrameAsset,
   isGeneratedImage,
   isGifAsset,
   isImportedImage,
-  isStaticImageAsset,
+  isPipelineSourceImage,
   isTextDocumentAsset,
   removeVideoSource,
   revokeAllObjectUrls,
@@ -272,7 +273,7 @@ export function useStudioStore() {
 
   /** Reset add-text settings when switching to a new static image */
   useEffect(() => {
-    if (!primarySelected || !isStaticImageAsset(primarySelected)) return
+    if (!primarySelected || !isPipelineSourceImage(primarySelected)) return
     if (lastAddTextStaticImageIdRef.current === primarySelected.id) return
 
     lastAddTextStaticImageIdRef.current = primarySelected.id
@@ -300,7 +301,7 @@ export function useStudioStore() {
         return
       }
 
-      if (!isStaticImageAsset(target) || !settings.text.trim()) return
+      if (!isPipelineSourceImage(target) || !settings.text.trim()) return
 
       if (textDocCreateInFlightRef.current) {
         await textDocCreateInFlightRef.current
@@ -351,14 +352,14 @@ export function useStudioStore() {
   useEffect(() => {
     if (activeTab !== 'add-text') return
     if (!primarySelected) return
-    if (!isStaticImageAsset(primarySelected) && !isTextDocumentAsset(primarySelected)) return
+    if (!isPipelineSourceImage(primarySelected) && !isTextDocumentAsset(primarySelected)) return
 
     if (skipAddTextAutoSaveRef.current) {
       skipAddTextAutoSaveRef.current = false
       return
     }
 
-    if (isStaticImageAsset(primarySelected) && !hasTextBox(addTextSettings)) return
+    if (isPipelineSourceImage(primarySelected) && !hasTextBox(addTextSettings)) return
 
     if (addTextAutoSaveTimerRef.current) {
       clearTimeout(addTextAutoSaveTimerRef.current)
@@ -632,7 +633,7 @@ export function useStudioStore() {
    * Runs sequentially because the segmentation worker holds a single model instance.
    */
   const runRemoveBackground = useCallback(async () => {
-    const imageTargets = selectedAssets.filter(isStaticImageAsset)
+    const imageTargets = selectedAssets.filter(isPipelineSourceImage)
     const gifTargets = selectedAssets.filter(isGifAsset)
     if ((imageTargets.length === 0 && gifTargets.length === 0) || !autoSegmentSupported) return
 
@@ -737,7 +738,7 @@ export function useStudioStore() {
 
   /** Convert selected images to another format */
   const runConvertFormat = useCallback(async () => {
-    const targets = selectedAssets.filter((a) => a.kind === 'image')
+    const targets = selectedAssets.filter(isPipelineSourceImage)
     if (targets.length === 0) return
 
     const jobId = crypto.randomUUID()
@@ -847,7 +848,7 @@ export function useStudioStore() {
 
   /** Compose sprite sheet from selected frame assets */
   const runComposeSprite = useCallback(async () => {
-    const frames = selectedAssets.filter((a) => a.kind === 'image')
+    const frames = selectedAssets.filter(isFrameAsset)
     if (frames.length === 0) return
 
     const jobId = crypto.randomUUID()

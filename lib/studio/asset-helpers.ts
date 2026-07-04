@@ -235,6 +235,24 @@ export function isGeneratedImage(asset: StudioAsset): boolean {
 }
 
 /**
+ * Whether an asset is an original imported raster image suitable as a pipeline source
+ * @param asset Studio asset
+ * @returns True when remove-bg, convert, or add-text can target this asset
+ */
+export function isPipelineSourceImage(asset: StudioAsset): boolean {
+  return isStaticImageAsset(asset) && isImportedImage(asset)
+}
+
+/**
+ * Whether an asset is a video frame suitable for GIF or sprite composition
+ * @param asset Studio asset
+ * @returns True when the asset was extracted as a video frame
+ */
+export function isFrameAsset(asset: StudioAsset): boolean {
+  return asset.source === 'frame'
+}
+
+/**
  * Whether an asset is an animated or static GIF
  * @param asset Studio asset
  * @returns True when the asset is a GIF

@@ -5,7 +5,7 @@ import type { ComponentType } from 'react'
 import { FiDownload, FiFilm, FiGrid, FiRepeat, FiScissors, FiType } from 'react-icons/fi'
 import { MdOutlineGif } from 'react-icons/md'
 
-import { isStaticImageAsset, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
+import { isFrameAsset, isGifAsset, isPipelineSourceImage, isStaticImageAsset, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
 import type { StudioAsset } from '@/lib/studio/types'
 
 import type { StudioOperationTab } from '../../hooks/studio-types'
@@ -74,7 +74,30 @@ export const OPERATION_TABS: OperationTabItem[] = [
  * @returns Number of frame or static image sources
  */
 function countGifComposeSources(selectedAssets: StudioAsset[]): number {
-  return selectedAssets.filter((asset) => asset.source === 'frame' || isStaticImageAsset(asset)).length
+  return selectedAssets.filter((asset) => isFrameAsset(asset) || isStaticImageAsset(asset)).length
+}
+
+/**
+ * Whether sprite composition should be available for the current selection
+ * @param selectedAssets Currently selected library assets
+ * @returns True when every selected asset is an extracted video frame
+ */
+function canComposeSprite(selectedAssets: StudioAsset[]): boolean {
+  if (selectedAssets.length === 0) return false
+  return selectedAssets.every(isFrameAsset)
+}
+
+/**
+ * Whether add-text should be available for the current selection
+ * @param selectedAssets Currently selected library assets
+ * @returns True when add-text tab should appear
+ */
+function canShowAddTextTab(selectedAssets: StudioAsset[]): boolean {
+  if (selectedAssets.length === 0) return true
+  if (selectedAssets.length !== 1) return false
+
+  const asset = selectedAssets[0]
+  return isTextDocumentAsset(asset) || isPipelineSourceImage(asset)
 }
 
 /**
@@ -84,13 +107,27 @@ function countGifComposeSources(selectedAssets: StudioAsset[]): number {
  */
 export function getVisibleOperationTabs(selectedAssets: StudioAsset[]): OperationTabItem[] {
   const hasVideoSelected = selectedAssets.some((asset) => asset.kind === 'video')
-  const hasStaticImage = selectedAssets.some((asset) => isStaticImageAsset(asset) || isTextDocumentAsset(asset))
+  const hasPipelineSourceImage = selectedAssets.some(isPipelineSourceImage)
+  const hasGifForRemoveBg = selectedAssets.some(isGifAsset)
   const canComposeGif = countGifComposeSources(selectedAssets) >= 2
+  const canShowComposeSprite = canComposeSprite(selectedAssets)
 
   return OPERATION_TABS.filter((tab) => {
     if (tab.value === 'extract-frames') return hasVideoSelected
     if (tab.value === 'compose-gif') return canComposeGif
-    if (tab.value === 'add-text') return hasStaticImage || selectedAssets.length === 0
+    if (tab.value === 'compose-sprite') return canShowComposeSprite
+    if (tab.value === 'remove-background') return hasPipelineSourceImage || hasGifForRemoveBg
+    if (tab.value === 'convert-format') return hasPipelineSourceImage
+    if (tab.value === 'add-text') return canShowAddTextTab(selectedAssets)
     return true
   })
+}
+
+/**
+ * Pick the first visible operation tab as a fallback when the active tab is hidden
+ * @param selectedAssets Currently selected library assets
+ * @returns Fallback tab id
+ */
+export function getDefaultOperationTab(selectedAssets: StudioAsset[]): StudioOperationTab {
+  return getVisibleOperationTabs(selectedAssets)[0]?.value ?? 'export'
 }

@@ -4,7 +4,7 @@
  * Zone C: canvas area switching between view modes
  */
 import { PanelEmptyState } from '@/components/PanelEmptyState'
-import { isStaticImageAsset, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
+import { isPipelineSourceImage, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
 import { getTextDocumentBaseAsset } from '@/lib/studio/text-document'
 
 import { useStudio } from '../../context/StudioContext'
@@ -37,7 +37,7 @@ export function CanvasArea() {
 
   const emptyMessage = getPreviewEmptyMessage(loading, allAssets.length, selectedIds.length)
   const addTextBaseAsset = primarySelected && isTextDocumentAsset(primarySelected) ? getTextDocumentBaseAsset(primarySelected, allAssets) : primarySelected
-  const showAddTextPreview = activeTab === 'add-text' && addTextBaseAsset && primarySelected && (isStaticImageAsset(primarySelected) || isTextDocumentAsset(primarySelected))
+  const showAddTextPreview = activeTab === 'add-text' && addTextBaseAsset && primarySelected && (isPipelineSourceImage(primarySelected) || isTextDocumentAsset(primarySelected))
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--studio-workspace-bg)]">

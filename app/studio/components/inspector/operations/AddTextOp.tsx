@@ -4,6 +4,7 @@
  * Add text overlay inspector operation panel
  */
 import { FormField } from '@/components/FormField'
+import { RangeInput } from '@/components/RangeInput'
 import { Select } from '@/components/Select'
 import { Slider } from '@/components/Slider'
 import { TextInput } from '@/components/TextInput'
@@ -82,17 +83,16 @@ export function AddTextOp() {
 
       <FormField id="add-text-size" label="Size">
         <div className="flex min-w-0 items-center gap-2">
-          <div className="min-w-0 flex-1">
-            <Slider
-              id="add-text-size-slider"
-              min={MIN_FONT_SIZE}
-              max={MAX_FONT_SIZE}
-              step={1}
-              value={addTextSettings.fontSize}
-              onChange={(fontSize) => setAddTextSettings((prev) => ({ ...prev, fontSize: clampFontSize(fontSize) }))}
-              disabled={isBusy}
-            />
-          </div>
+          <RangeInput
+            id="add-text-size-slider"
+            min={MIN_FONT_SIZE}
+            max={MAX_FONT_SIZE}
+            step={1}
+            value={addTextSettings.fontSize}
+            onChange={(fontSize) => setAddTextSettings((prev) => ({ ...prev, fontSize: clampFontSize(fontSize) }))}
+            disabled={isBusy}
+            className="min-w-0 flex-1"
+          />
           <TextInput
             id="add-text-size"
             value={String(addTextSettings.fontSize)}

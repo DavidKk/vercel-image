@@ -8,7 +8,7 @@ import { useMemo } from 'react'
 import { estimateFrameCount } from '@/app/frames/core/frame-scheduler'
 import { resolveTimeRange } from '@/app/frames/core/time-range'
 import { getProcessingModeLabel } from '@/app/progress/core/model-config'
-import { getVideoSource, isGifAsset, isStaticImageAsset } from '@/lib/studio/asset-helpers'
+import { getVideoSource, isFrameAsset, isGifAsset, isPipelineSourceImage } from '@/lib/studio/asset-helpers'
 
 import { useStudio } from '../context/StudioContext'
 import { DEFAULT_CONVERT, DEFAULT_EXTRACTION, DEFAULT_GIF, DEFAULT_SPRITE, type StudioOperationTab } from './studio-types'
@@ -61,7 +61,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
   } = useStudio()
 
   return useMemo(() => {
-    const imageAssets = selectedAssets.filter(isStaticImageAsset)
+    const imageAssets = selectedAssets.filter(isPipelineSourceImage)
     const gifAssets = selectedAssets.filter(isGifAsset)
     const aiTargets = imageAssets.length + gifAssets.length
     const videoAsset = selectedAssets.find((asset) => asset.kind === 'video')
@@ -127,9 +127,9 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
       case 'compose-sprite':
         return {
           label: 'Submit',
-          submitTooltip: `Compose sprite (${imageAssets.length})`,
+          submitTooltip: `Compose sprite (${selectedAssets.filter(isFrameAsset).length})`,
           showSubmit: true,
-          canRun: !isBusy && imageAssets.length > 0,
+          canRun: !isBusy && selectedAssets.length > 0 && selectedAssets.every(isFrameAsset),
           run: runComposeSprite,
           reset: () => setSpriteSettings(DEFAULT_SPRITE),
           canReset: !isBusy,
