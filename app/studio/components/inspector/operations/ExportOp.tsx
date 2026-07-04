@@ -16,7 +16,7 @@ export function ExportOp() {
   return (
     <div className="space-y-2 text-xs text-[var(--studio-surface-fg-muted)]">
       <p>
-        Export {exportCount} asset{exportCount === 1 ? '' : 's'} as a ZIP archive using Submit below.
+        Export {exportCount} asset{exportCount === 1 ? '' : 's'} as a ZIP archive. Text documents are flattened with their text layers on export.
       </p>
       {primarySelected && selectedAssets.length === 1 && <p className="text-[var(--studio-surface-fg-subtle)]">Selected: {primarySelected.name}</p>}
     </div>

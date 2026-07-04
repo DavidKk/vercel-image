@@ -15,6 +15,8 @@ import { DEFAULT_CONVERT, DEFAULT_EXTRACTION, DEFAULT_GIF, DEFAULT_SPRITE, type 
 
 /** Resolved operation action for inspector footer */
 export interface OperationAction {
+  /** Whether the inspector footer should show the primary submit button */
+  showSubmit: boolean
   /** Primary submit button label */
   label: string
   /** Tooltip describing what submit will do */
@@ -72,6 +74,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: `${getProcessingModeLabel(processingConfig.mode)} (${aiTargets})`,
+          showSubmit: true,
           canRun: !isBusy && !isModelInitializing && aiTargets > 0 && autoSegmentSupported,
           run: runRemoveBackground,
           reset: handleResetConfig,
@@ -82,16 +85,28 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: `Convert format (${imageAssets.length})`,
+          showSubmit: true,
           canRun: !isBusy && imageAssets.length > 0,
           run: runConvertFormat,
           reset: () => setConvertSettings(DEFAULT_CONVERT),
           canReset: !isBusy,
           resetTooltip: 'Reset to defaults',
         }
+      case 'add-text':
+        return {
+          label: 'Save',
+          submitTooltip: 'Changes are saved automatically',
+          showSubmit: false,
+          canRun: false,
+          run: () => {},
+          canReset: false,
+          resetTooltip: 'Reset to defaults',
+        }
       case 'extract-frames':
         return {
           label: 'Submit',
           submitTooltip: `Extract frames (~${estimatedFrames})`,
+          showSubmit: true,
           canRun: !isBusy && Boolean(videoAsset) && estimatedFrames > 0,
           run: runExtractFrames,
           reset: () => setExtractionSettings(DEFAULT_EXTRACTION),
@@ -102,6 +117,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: `Compose GIF (${imageAssets.length})`,
+          showSubmit: true,
           canRun: !isBusy && imageAssets.length >= 2,
           run: runComposeGif,
           reset: () => setGifSettings(DEFAULT_GIF),
@@ -112,6 +128,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: `Compose sprite (${imageAssets.length})`,
+          showSubmit: true,
           canRun: !isBusy && imageAssets.length > 0,
           run: runComposeSprite,
           reset: () => setSpriteSettings(DEFAULT_SPRITE),
@@ -122,6 +139,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: `Export ZIP (${selectedAssets.length > 0 ? selectedAssets.length : assets.length})`,
+          showSubmit: true,
           canRun: !isBusy && assets.length > 0,
           run: exportSelected,
           canReset: false,
@@ -131,6 +149,7 @@ export function useOperationAction(activeTab: StudioOperationTab): OperationActi
         return {
           label: 'Submit',
           submitTooltip: 'Submit',
+          showSubmit: true,
           canRun: false,
           run: () => {},
           canReset: false,

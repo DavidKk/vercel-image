@@ -36,6 +36,8 @@ export function InspectorPanel() {
   const activeLabel = OPERATION_TABS.find((tab) => tab.value === activeTab)?.label ?? 'Settings'
   const needsSelection = activeTab !== 'export' && selectedIds.length === 0
   const showReset = action.canReset && Boolean(action.reset)
+  const showSubmit = action.showSubmit
+  const showFooterActions = showReset || showSubmit
 
   return (
     <StudioPanel className="relative h-full w-studio-inspector shrink-0 border-l border-[var(--studio-surface-border)]">
@@ -53,33 +55,37 @@ export function InspectorPanel() {
 
       <InspectorProgressModule />
 
-      <div className="flex w-full shrink-0 gap-2 bg-[var(--studio-surface-bg)] p-3">
-        {showReset ? (
-          <Tooltip content={action.resetTooltip} placement="top" wrapperClassName="shrink-0">
-            <button
-              type="button"
-              onClick={() => void action.reset?.()}
-              disabled={!action.canReset || needsSelection}
-              className={INSPECTOR_ICON_BUTTON_CLASS}
-              aria-label={action.resetTooltip}
-            >
-              <FiRotateCcw className="h-4 w-4" aria-hidden />
-            </button>
-          </Tooltip>
-        ) : null}
+      {showFooterActions ? (
+        <div className="flex w-full shrink-0 gap-2 bg-[var(--studio-surface-bg)] p-3">
+          {showReset ? (
+            <Tooltip content={action.resetTooltip} placement="top" wrapperClassName="shrink-0">
+              <button
+                type="button"
+                onClick={() => void action.reset?.()}
+                disabled={!action.canReset || needsSelection}
+                className={INSPECTOR_ICON_BUTTON_CLASS}
+                aria-label={action.resetTooltip}
+              >
+                <FiRotateCcw className="h-4 w-4" aria-hidden />
+              </button>
+            </Tooltip>
+          ) : null}
 
-        <Tooltip content={action.submitTooltip} placement="top" wrapperClassName="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={() => void action.run()}
-            disabled={!action.canRun || needsSelection}
-            className={INSPECTOR_SUBMIT_BUTTON_CLASS}
-            aria-label={action.submitTooltip}
-          >
-            {action.label}
-          </button>
-        </Tooltip>
-      </div>
+          {showSubmit ? (
+            <Tooltip content={action.submitTooltip} placement="top" wrapperClassName="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => void action.run()}
+                disabled={!action.canRun || needsSelection}
+                className={INSPECTOR_SUBMIT_BUTTON_CLASS}
+                aria-label={action.submitTooltip}
+              >
+                {action.label}
+              </button>
+            </Tooltip>
+          ) : null}
+        </div>
+      ) : null}
     </StudioPanel>
   )
 }

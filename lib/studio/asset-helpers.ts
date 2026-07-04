@@ -6,13 +6,16 @@ import { captureVideoFrameBlob, loadVideoFile } from '@/app/frames/core/video-fr
 import { fileToImage } from '@/lib/image/canvas'
 
 import { createAssetId } from './asset-service'
+import { isTextDocumentAsset, TEXT_DOCUMENT_MIME } from './text-document'
 import type { AssetKind, AssetSource, StudioAsset, StudioAssetInput } from './types'
+
+export { isTextDocumentAsset }
 
 /** In-memory video poster URL cache keyed by asset id */
 const videoPosterCache = new Map<string, string>()
 
 /** In-memory object URL cache keyed by asset id */
-const urlCache = new Map<string, string>()
+const urlCache = new Map<string, { url: string; blobSize: number }>()
 
 /** In-memory video source cache keyed by asset id */
 const videoCache = new Map<string, VideoSource>()
@@ -25,9 +28,14 @@ const videoCache = new Map<string, VideoSource>()
  */
 export function getAssetObjectUrl(id: string, blob: Blob): string {
   const cached = urlCache.get(id)
-  if (cached) return cached
+  if (cached && cached.blobSize === blob.size) return cached.url
+
+  if (cached) {
+    URL.revokeObjectURL(cached.url)
+  }
+
   const url = URL.createObjectURL(blob)
-  urlCache.set(id, url)
+  urlCache.set(id, { url, blobSize: blob.size })
   return url
 }
 
@@ -37,9 +45,9 @@ export function getAssetObjectUrl(id: string, blob: Blob): string {
  * @returns Nothing
  */
 export function revokeAssetObjectUrl(id: string): void {
-  const url = urlCache.get(id)
-  if (url) {
-    URL.revokeObjectURL(url)
+  const cached = urlCache.get(id)
+  if (cached) {
+    URL.revokeObjectURL(cached.url)
     urlCache.delete(id)
   }
   revokeVideoPosterUrl(id)
@@ -63,8 +71,8 @@ export function revokeVideoPosterUrl(id: string): void {
  * @returns Nothing
  */
 export function revokeAllObjectUrls(): void {
-  for (const url of urlCache.values()) {
-    URL.revokeObjectURL(url)
+  for (const cached of urlCache.values()) {
+    URL.revokeObjectURL(cached.url)
   }
   urlCache.clear()
   for (const url of videoPosterCache.values()) {
@@ -263,6 +271,10 @@ export function sourceLabel(source: AssetSource): string {
       return 'GIF'
     case 'sprite':
       return 'Sprite'
+    case 'text':
+      return 'Text'
+    case 'text-document':
+      return 'Text doc'
     default:
       return source
   }
@@ -281,6 +293,7 @@ export function mimeToLabel(mimeType: string): string {
     'image/gif': 'GIF',
     'video/mp4': 'MP4',
     'video/webm': 'WebM',
+    [TEXT_DOCUMENT_MIME]: 'Text doc',
   }
   return map[mimeType] ?? mimeType.split('/').pop()?.toUpperCase() ?? 'FILE'
 }

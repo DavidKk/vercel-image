@@ -4,8 +4,11 @@
  * Zone C: canvas area switching between view modes
  */
 import { PanelEmptyState } from '@/components/PanelEmptyState'
+import { isStaticImageAsset, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
+import { getTextDocumentBaseAsset } from '@/lib/studio/text-document'
 
 import { useStudio } from '../../context/StudioContext'
+import { AddTextPreviewView } from './AddTextPreviewView'
 import { CompareView } from './CompareView'
 import { DetailView } from './DetailView'
 import { PreviewToolbar } from './PreviewToolbar'
@@ -30,14 +33,18 @@ function getPreviewEmptyMessage(loading: boolean, assetCount: number, selectedCo
  * @returns Canvas area element
  */
 export function CanvasArea() {
-  const { allAssets, loading, selectedIds, primarySelected, parentAsset, spriteAsset, viewMode } = useStudio()
+  const { allAssets, loading, selectedIds, primarySelected, parentAsset, spriteAsset, viewMode, activeTab } = useStudio()
 
   const emptyMessage = getPreviewEmptyMessage(loading, allAssets.length, selectedIds.length)
+  const addTextBaseAsset = primarySelected && isTextDocumentAsset(primarySelected) ? getTextDocumentBaseAsset(primarySelected, allAssets) : primarySelected
+  const showAddTextPreview = activeTab === 'add-text' && addTextBaseAsset && primarySelected && (isStaticImageAsset(primarySelected) || isTextDocumentAsset(primarySelected))
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--studio-workspace-bg)]">
       <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--studio-canvas-bg)]">
-        {viewMode === 'detail' && primarySelected ? (
+        {showAddTextPreview && addTextBaseAsset ? (
+          <AddTextPreviewView asset={addTextBaseAsset} />
+        ) : viewMode === 'detail' && primarySelected ? (
           <DetailView asset={primarySelected} />
         ) : viewMode === 'compare' && primarySelected && parentAsset ? (
           <CompareView asset={primarySelected} parent={parentAsset} />

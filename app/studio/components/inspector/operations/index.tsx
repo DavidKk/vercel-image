@@ -4,6 +4,7 @@
  * Inspector operation panel router
  */
 import type { StudioOperationTab } from '../../../hooks/studio-types'
+import { AddTextOp } from './AddTextOp'
 import { ComposeGifOp } from './ComposeGifOp'
 import { ComposeSpriteOp } from './ComposeSpriteOp'
 import { ConvertFormatOp } from './ConvertFormatOp'
@@ -15,6 +16,7 @@ import { RemoveBackgroundOp } from './RemoveBackgroundOp'
 const TAB_PANELS: Record<StudioOperationTab, () => React.ReactNode> = {
   'remove-background': RemoveBackgroundOp,
   'convert-format': ConvertFormatOp,
+  'add-text': AddTextOp,
   'extract-frames': ExtractFramesOp,
   'compose-gif': ComposeGifOp,
   'compose-sprite': ComposeSpriteOp,

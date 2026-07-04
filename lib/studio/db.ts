@@ -18,6 +18,20 @@ export class StudioDatabase extends Dexie {
     this.version(1).stores({
       assets: 'id, kind, source, parentId, createdAt, updatedAt',
     })
+    this.version(2)
+      .stores({
+        assets: 'id, kind, source, parentId, createdAt, updatedAt, sortOrder',
+      })
+      .upgrade(async (transaction) => {
+        await transaction
+          .table('assets')
+          .toCollection()
+          .modify((asset: StudioAsset) => {
+            if (asset.sortOrder == null) {
+              asset.sortOrder = asset.createdAt
+            }
+          })
+      })
   }
 }
 

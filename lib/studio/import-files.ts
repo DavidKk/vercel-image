@@ -67,6 +67,15 @@ export function partitionImportFiles(files: FileList | File[], scope: StudioImpo
 }
 
 /**
+ * Sort files by name using natural (numeric-aware) ordering
+ * @param files Files to sort
+ * @returns New array sorted ascending by filename
+ */
+export function sortFilesByName(files: File[]): File[] {
+  return [...files].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }))
+}
+
+/**
  * Build a short file name summary for notification messages
  * @param files Files to summarize
  * @param maxNames Maximum names to include inline

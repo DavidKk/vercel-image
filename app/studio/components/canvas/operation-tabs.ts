@@ -2,10 +2,10 @@
  * Studio preview toolbar operation tabs
  */
 import type { ComponentType } from 'react'
-import { FiDownload, FiFilm, FiGrid, FiRepeat, FiScissors } from 'react-icons/fi'
+import { FiDownload, FiFilm, FiGrid, FiRepeat, FiScissors, FiType } from 'react-icons/fi'
 import { MdOutlineGif } from 'react-icons/md'
 
-import { isStaticImageAsset } from '@/lib/studio/asset-helpers'
+import { isStaticImageAsset, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
 import type { StudioAsset } from '@/lib/studio/types'
 
 import type { StudioOperationTab } from '../../hooks/studio-types'
@@ -35,6 +35,12 @@ export const OPERATION_TABS: OperationTabItem[] = [
     label: 'Convert',
     tooltip: 'Convert selected images to PNG, JPEG, or WebP',
     Icon: FiRepeat,
+  },
+  {
+    value: 'add-text',
+    label: 'Add Text',
+    tooltip: 'Add or edit text on the preview image',
+    Icon: FiType,
   },
   {
     value: 'extract-frames',
@@ -78,11 +84,13 @@ function countGifComposeSources(selectedAssets: StudioAsset[]): number {
  */
 export function getVisibleOperationTabs(selectedAssets: StudioAsset[]): OperationTabItem[] {
   const hasVideoSelected = selectedAssets.some((asset) => asset.kind === 'video')
+  const hasStaticImage = selectedAssets.some((asset) => isStaticImageAsset(asset) || isTextDocumentAsset(asset))
   const canComposeGif = countGifComposeSources(selectedAssets) >= 2
 
   return OPERATION_TABS.filter((tab) => {
     if (tab.value === 'extract-frames') return hasVideoSelected
     if (tab.value === 'compose-gif') return canComposeGif
+    if (tab.value === 'add-text') return hasStaticImage || selectedAssets.length === 0
     return true
   })
 }

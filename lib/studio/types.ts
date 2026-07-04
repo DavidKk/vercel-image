@@ -3,10 +3,10 @@
  */
 
 /** Kind of asset stored in the library */
-export type AssetKind = 'image' | 'video' | 'gif' | 'sprite'
+export type AssetKind = 'image' | 'video' | 'gif' | 'sprite' | 'text-document'
 
 /** Origin of an asset within the pipeline */
-export type AssetSource = 'import' | 'background-removed' | 'converted' | 'frame' | 'gif' | 'sprite'
+export type AssetSource = 'import' | 'background-removed' | 'converted' | 'frame' | 'gif' | 'sprite' | 'text' | 'text-document'
 
 /**
  * A single asset persisted in the Studio library (IndexedDB)
@@ -36,13 +36,16 @@ export interface StudioAsset {
   createdAt: number
   /** Last update timestamp (epoch ms) */
   updatedAt: number
+  /** Manual library sort position (higher values appear first) */
+  sortOrder: number
   /** Optional free-form metadata (e.g. frame timestamp, sprite layout) */
   meta?: Record<string, unknown>
 }
 
 /** Input used to create a new asset */
-export type StudioAssetInput = Omit<StudioAsset, 'id' | 'createdAt' | 'updatedAt'> & {
+export type StudioAssetInput = Omit<StudioAsset, 'id' | 'createdAt' | 'updatedAt' | 'sortOrder'> & {
   id?: string
   createdAt?: number
   updatedAt?: number
+  sortOrder?: number
 }

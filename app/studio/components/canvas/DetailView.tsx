@@ -7,12 +7,13 @@ import { useEffect, useState } from 'react'
 
 import { PreviewPane } from '@/app/progress/components/PreviewPane'
 import { blobToImage } from '@/lib/image/canvas'
-import { getAssetObjectUrl } from '@/lib/studio/asset-helpers'
+import { getAssetObjectUrl, isTextDocumentAsset } from '@/lib/studio/asset-helpers'
 import { getPendingJobId, isPendingAsset } from '@/lib/studio/pending-asset'
 import type { StudioAsset } from '@/lib/studio/types'
 
 import { useStudio } from '../../context/StudioContext'
 import { GeneratingResultView } from './GeneratingResultView'
+import { TextDocumentPreview } from './TextDocumentPreview'
 
 interface DetailViewProps {
   /** Asset to preview */
@@ -31,14 +32,18 @@ export function DetailView(props: DetailViewProps) {
   const pending = isPendingAsset(asset)
 
   useEffect(() => {
-    if (pending || asset.kind === 'video' || asset.kind === 'gif' || asset.mimeType === 'image/gif') {
+    if (pending || asset.kind === 'video' || asset.kind === 'gif' || asset.mimeType === 'image/gif' || isTextDocumentAsset(asset)) {
       setImage(null)
       return
     }
     let active = true
-    blobToImage(asset.blob).then((img) => {
-      if (active) setImage(img)
-    })
+    blobToImage(asset.blob)
+      .then((img) => {
+        if (active) setImage(img)
+      })
+      .catch(() => {
+        if (active) setImage(null)
+      })
     return () => {
       active = false
     }
@@ -48,6 +53,10 @@ export function DetailView(props: DetailViewProps) {
     const jobId = getPendingJobId(asset)
     const job = jobId ? jobs.find((entry) => entry.id === jobId) : undefined
     return <GeneratingResultView name={asset.name} statusLabel={job?.message ?? 'Generating…'} progress={job?.status === 'running' ? job.progress : undefined} />
+  }
+
+  if (isTextDocumentAsset(asset)) {
+    return <TextDocumentPreview asset={asset} />
   }
 
   if (asset.kind === 'video') {

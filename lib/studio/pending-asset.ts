@@ -77,6 +77,7 @@ export function createPendingAsset(options: CreatePendingAssetOptions): StudioAs
     parentId: options.parentId,
     createdAt: now,
     updatedAt: now,
+    sortOrder: now,
     meta: {
       pending: true,
       jobId: options.jobId,
@@ -155,6 +156,29 @@ export function buildPendingConvertAsset(target: StudioAsset, jobId: string, for
     kind: 'image',
     source: 'converted',
     name: `${baseName}.${ext}`,
+    jobId,
+    parentId: target.id,
+    width: target.width,
+    height: target.height,
+    mimeType: format,
+  })
+}
+
+/**
+ * Build a pending asset for text overlay output
+ * @param target Source image asset
+ * @param jobId Active job id
+ * @param format Output MIME type
+ * @returns Pending text-overlay asset
+ */
+export function buildPendingAddTextAsset(target: StudioAsset, jobId: string, format: 'image/png' | 'image/webp'): StudioAsset {
+  const ext = format.split('/')[1]
+  const baseName = target.name.replace(/\.[^.]+$/, '')
+
+  return createPendingAsset({
+    kind: 'image',
+    source: 'text',
+    name: `${baseName}-text.${ext}`,
     jobId,
     parentId: target.id,
     width: target.width,

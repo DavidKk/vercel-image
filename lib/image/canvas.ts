@@ -55,9 +55,9 @@ export function fileToImage(file: File): Promise<HTMLImageElement> {
       URL.revokeObjectURL(url)
       resolve(img)
     }
-    img.onerror = (err) => {
+    img.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(err)
+      reject(new Error('Failed to decode image blob'))
     }
     img.src = url
   })
@@ -76,9 +76,9 @@ export function blobToImage(blob: Blob): Promise<HTMLImageElement> {
       URL.revokeObjectURL(url)
       resolve(img)
     }
-    img.onerror = (err) => {
+    img.onerror = () => {
       URL.revokeObjectURL(url)
-      reject(err)
+      reject(new Error('Failed to decode image blob'))
     }
     img.src = url
   })

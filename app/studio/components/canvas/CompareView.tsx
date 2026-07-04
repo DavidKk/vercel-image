@@ -7,6 +7,8 @@ import { useEffect, useState } from 'react'
 
 import { PreviewPane } from '@/app/progress/components/PreviewPane'
 import { blobToImage } from '@/lib/image/canvas'
+import { isTextDocumentAsset } from '@/lib/studio/asset-helpers'
+import { parseTextDocument, renderTextDocument } from '@/lib/studio/text-document'
 import type { StudioAsset } from '@/lib/studio/types'
 
 interface CompareViewProps {
@@ -28,12 +30,32 @@ export function CompareView(props: CompareViewProps) {
 
   useEffect(() => {
     let active = true
-    Promise.all([blobToImage(parent.blob), blobToImage(asset.blob)]).then(([left, right]) => {
-      if (active) {
-        setLeftImage(left)
-        setRightImage(right)
+
+    async function load() {
+      try {
+        const left = await blobToImage(parent.blob)
+        let right: HTMLImageElement
+        if (isTextDocumentAsset(asset)) {
+          const content = await parseTextDocument(asset)
+          if (!content) throw new Error('Invalid text document')
+          const blob = await renderTextDocument(parent, content)
+          right = await blobToImage(blob)
+        } else {
+          right = await blobToImage(asset.blob)
+        }
+        if (active) {
+          setLeftImage(left)
+          setRightImage(right)
+        }
+      } catch {
+        if (active) {
+          setLeftImage(null)
+          setRightImage(null)
+        }
       }
-    })
+    }
+
+    void load()
     return () => {
       active = false
     }

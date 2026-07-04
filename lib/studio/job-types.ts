@@ -3,7 +3,7 @@
  */
 
 /** Supported operation types */
-export type JobType = 'removeBackground' | 'convertFormat' | 'extractFrames' | 'composeGif' | 'composeSprite'
+export type JobType = 'removeBackground' | 'convertFormat' | 'extractFrames' | 'composeGif' | 'composeSprite' | 'addText'
 
 /** Job lifecycle status */
 export type JobStatus = 'pending' | 'running' | 'done' | 'error' | 'cancelled'

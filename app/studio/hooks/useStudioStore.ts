@@ -18,12 +18,15 @@ import {
   isGifAsset,
   isImportedImage,
   isStaticImageAsset,
+  isTextDocumentAsset,
   removeVideoSource,
   revokeAllObjectUrls,
   revokeAssetObjectUrl,
 } from '@/lib/studio/asset-helpers'
-import { addAssets, clearAssets, deleteAssets, listAssets } from '@/lib/studio/asset-service'
+import { reorderFilteredAssets, sortAssetsByOrder } from '@/lib/studio/asset-order'
+import { addAsset, addAssets, clearAssets, deleteAssets, listAssets, updateAsset, updateAssetSortOrders } from '@/lib/studio/asset-service'
 import { downloadAsset, downloadAssetsAsZip } from '@/lib/studio/export'
+import { sortFilesByName } from '@/lib/studio/import-files'
 import type { StudioJob } from '@/lib/studio/job-types'
 import {
   composeGifFromFrames,
@@ -33,19 +36,24 @@ import {
   processGifRemoveBackgroundBatch,
   processRemoveBackgroundBatch,
 } from '@/lib/studio/operations'
+import { hasTextBox } from '@/lib/studio/operations/add-text'
 import {
   buildPendingComposeGifAsset,
   buildPendingComposeSpriteAsset,
   buildPendingConvertAsset,
   buildPendingExtractFramesAsset,
   buildPendingRemoveBackgroundAsset,
+  isPendingAsset,
   resolvePendingNavigation,
 } from '@/lib/studio/pending-asset'
+import { buildTextDocumentContent, buildTextDocumentInput, parseTextDocument, serializeTextDocument, textDocumentToAddTextSettings } from '@/lib/studio/text-document'
 import type { StudioAsset } from '@/lib/studio/types'
 
 import {
+  type AddTextSettings,
   type AssetProcessStatus,
   type ConvertFormatSettings,
+  DEFAULT_ADD_TEXT,
   DEFAULT_CONVERT,
   DEFAULT_EXTRACTION,
   DEFAULT_GIF,
@@ -89,6 +97,7 @@ export function useStudioStore() {
   const [processingConfig, setProcessingConfig] = useState<BackgroundRemovalUserConfig>(DEFAULT_BACKGROUND_REMOVAL_CONFIG)
   const [extractionSettings, setExtractionSettings] = useState(DEFAULT_EXTRACTION)
   const [convertSettings, setConvertSettings] = useState<ConvertFormatSettings>(DEFAULT_CONVERT)
+  const [addTextSettings, setAddTextSettings] = useState<AddTextSettings>(DEFAULT_ADD_TEXT)
   const [gifSettings, setGifSettings] = useState<GifComposeSettings>(DEFAULT_GIF)
   const [spriteSettings, setSpriteSettings] = useState<SpriteComposeSettings>(DEFAULT_SPRITE)
   const [autoSegmentSupported, setAutoSegmentSupported] = useState(false)
@@ -109,8 +118,17 @@ export function useStudioStore() {
   const pendingAssetsRef = useRef(pendingAssets)
   pendingAssetsRef.current = pendingAssets
 
+  /** Skip the next auto-save after loading or resetting add-text settings */
+  const skipAddTextAutoSaveRef = useRef(false)
+  /** Debounce timer for add-text auto-save */
+  const addTextAutoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  /** In-flight text document creation promise to avoid duplicate documents */
+  const textDocCreateInFlightRef = useRef<Promise<void> | null>(null)
+  /** Last static image id used for add-text to detect target changes */
+  const lastAddTextStaticImageIdRef = useRef<string | null>(null)
+
   /** Merge persisted assets with in-memory pending placeholders */
-  const allAssets = useMemo(() => [...assets, ...pendingAssets], [assets, pendingAssets])
+  const allAssets = useMemo(() => sortAssetsByOrder([...assets, ...pendingAssets]), [assets, pendingAssets])
 
   /** Sync kind filter and selection from URL query (back/forward and direct links) */
   useEffect(() => {
@@ -219,9 +237,11 @@ export function useStudioStore() {
 
   const filteredAssets = useMemo(() => {
     return allAssets.filter((asset) => {
-      if (asset.kind !== kindFilter) return false
-      if (kindFilter !== 'image') return true
-      return imageOriginFilter === 'original' ? isImportedImage(asset) : isGeneratedImage(asset)
+      if (kindFilter === 'image') {
+        if (imageOriginFilter === 'original') return isImportedImage(asset)
+        return isGeneratedImage(asset) || isTextDocumentAsset(asset)
+      }
+      return asset.kind === kindFilter
     })
   }, [allAssets, kindFilter, imageOriginFilter])
 
@@ -231,6 +251,132 @@ export function useStudioStore() {
   }, [allAssets, selectedIds])
 
   const primarySelected = useMemo(() => (selectedIds.length === 1 ? (allAssets.find((a) => a.id === selectedIds[0]) ?? null) : null), [allAssets, selectedIds])
+
+  /** Load editable text layers when a text document is selected */
+  useEffect(() => {
+    if (!primarySelected || !isTextDocumentAsset(primarySelected)) return
+
+    lastAddTextStaticImageIdRef.current = null
+    let active = true
+    skipAddTextAutoSaveRef.current = true
+    parseTextDocument(primarySelected).then((content) => {
+      if (!active || !content) return
+      setAddTextSettings(textDocumentToAddTextSettings(content))
+      setActiveTab('add-text')
+    })
+
+    return () => {
+      active = false
+    }
+  }, [primarySelected])
+
+  /** Reset add-text settings when switching to a new static image */
+  useEffect(() => {
+    if (!primarySelected || !isStaticImageAsset(primarySelected)) return
+    if (lastAddTextStaticImageIdRef.current === primarySelected.id) return
+
+    lastAddTextStaticImageIdRef.current = primarySelected.id
+    skipAddTextAutoSaveRef.current = true
+    setAddTextSettings(DEFAULT_ADD_TEXT)
+  }, [primarySelected])
+
+  /**
+   * Find an existing text document linked to a base image
+   * @param parentId Base image asset id
+   * @returns Matching text document or undefined
+   */
+  const findTextDocumentForParent = useCallback((parentId: string) => {
+    return assetsRef.current.find((asset) => isTextDocumentAsset(asset) && asset.parentId === parentId)
+  }, [])
+
+  /** Persist add-text settings to a text document (create or update) */
+  const persistAddText = useCallback(
+    async (settings: AddTextSettings, target: StudioAsset) => {
+      if (isTextDocumentAsset(target)) {
+        const content = buildTextDocumentContent(settings)
+        const blob = serializeTextDocument(content)
+        await updateAsset(target.id, { blob, size: blob.size })
+        await refresh()
+        return
+      }
+
+      if (!isStaticImageAsset(target) || !settings.text.trim()) return
+
+      if (textDocCreateInFlightRef.current) {
+        await textDocCreateInFlightRef.current
+        const existingDoc = findTextDocumentForParent(target.id)
+        if (!existingDoc) return
+
+        const content = buildTextDocumentContent(settings)
+        const blob = serializeTextDocument(content)
+        await updateAsset(existingDoc.id, { blob, size: blob.size })
+        await refresh()
+        skipAddTextAutoSaveRef.current = true
+        setSelectedIds([existingDoc.id])
+        setImageOriginFilterState('generated')
+        return
+      }
+
+      const existingDoc = findTextDocumentForParent(target.id)
+      if (existingDoc) {
+        const content = buildTextDocumentContent(settings)
+        const blob = serializeTextDocument(content)
+        await updateAsset(existingDoc.id, { blob, size: blob.size })
+        await refresh()
+        skipAddTextAutoSaveRef.current = true
+        setSelectedIds([existingDoc.id])
+        setImageOriginFilterState('generated')
+        return
+      }
+
+      textDocCreateInFlightRef.current = (async () => {
+        const created = await addAsset(buildTextDocumentInput(target, settings))
+        await refresh()
+        skipAddTextAutoSaveRef.current = true
+        setSelectedIds([created.id])
+        setImageOriginFilterState('generated')
+        setViewMode('detail')
+      })()
+
+      try {
+        await textDocCreateInFlightRef.current
+      } finally {
+        textDocCreateInFlightRef.current = null
+      }
+    },
+    [findTextDocumentForParent, refresh]
+  )
+
+  /** Auto-save add-text edits while the add-text tab is active */
+  useEffect(() => {
+    if (activeTab !== 'add-text') return
+    if (!primarySelected) return
+    if (!isStaticImageAsset(primarySelected) && !isTextDocumentAsset(primarySelected)) return
+
+    if (skipAddTextAutoSaveRef.current) {
+      skipAddTextAutoSaveRef.current = false
+      return
+    }
+
+    if (isStaticImageAsset(primarySelected) && !hasTextBox(addTextSettings)) return
+
+    if (addTextAutoSaveTimerRef.current) {
+      clearTimeout(addTextAutoSaveTimerRef.current)
+    }
+
+    const target = primarySelected
+    const settings = addTextSettings
+
+    addTextAutoSaveTimerRef.current = setTimeout(() => {
+      void persistAddText(settings, target)
+    }, 400)
+
+    return () => {
+      if (addTextAutoSaveTimerRef.current) {
+        clearTimeout(addTextAutoSaveTimerRef.current)
+      }
+    }
+  }, [activeTab, addTextSettings, persistAddText, primarySelected])
 
   const parentAsset = useMemo(() => {
     if (!primarySelected?.parentId) return null
@@ -364,8 +510,9 @@ export function useStudioStore() {
   /** Import images and videos into IndexedDB */
   const importFiles = useCallback(
     async (files: FileList | File[]) => {
+      const sortedFiles = sortFilesByName(Array.from(files))
       const inputs = []
-      for (const file of Array.from(files)) {
+      for (const file of sortedFiles) {
         if (file.type.startsWith('image/')) {
           inputs.push(await buildImageAssetInput(file))
         } else if (file.type.startsWith('video/')) {
@@ -445,6 +592,39 @@ export function useStudioStore() {
   }, [filteredAssets])
 
   const clearSelection = useCallback(() => setSelectedIds([]), [])
+
+  /**
+   * Reorder persisted assets within the active library filter via drag-and-drop
+   * @param sourceId Dragged asset id
+   * @param targetIndex Drop index within the filtered list
+   */
+  const reorderLibraryAssets = useCallback(
+    async (sourceId: string, targetIndex: number) => {
+      const sourceAsset = filteredAssets.find((asset) => asset.id === sourceId)
+      if (!sourceAsset || isPendingAsset(sourceAsset)) return
+
+      const reorderableFiltered = filteredAssets.filter((asset) => !isPendingAsset(asset))
+      const fromIndex = reorderableFiltered.findIndex((asset) => asset.id === sourceId)
+      if (fromIndex === -1) return
+
+      const targetAsset = filteredAssets[targetIndex]
+      if (!targetAsset || isPendingAsset(targetAsset)) return
+
+      const persistedTargetIndex = reorderableFiltered.findIndex((asset) => asset.id === targetAsset.id)
+      if (persistedTargetIndex === -1) return
+
+      const filteredIds = reorderableFiltered.map((asset) => asset.id)
+      const reordered = reorderFilteredAssets(assets, filteredIds, sourceId, persistedTargetIndex)
+
+      setAssets(reordered)
+      try {
+        await updateAssetSortOrders(reordered)
+      } catch {
+        await refresh()
+      }
+    },
+    [assets, filteredAssets, refresh]
+  )
 
   /**
    * Batch remove background on selected images and GIFs.
@@ -705,12 +885,15 @@ export function useStudioStore() {
   }, [reloadModel, processingConfig])
 
   const exportSelected = useCallback(() => {
-    downloadAssetsAsZip(selectedAssets.length > 0 ? selectedAssets : assets, 'studio-export.zip')
+    void downloadAssetsAsZip(selectedAssets.length > 0 ? selectedAssets : assets, assets, 'studio-export.zip')
   }, [selectedAssets, assets])
 
-  const exportSingle = useCallback((asset: StudioAsset) => {
-    downloadAsset(asset)
-  }, [])
+  const exportSingle = useCallback(
+    (asset: StudioAsset) => {
+      void downloadAsset(asset, assets)
+    },
+    [assets]
+  )
 
   return {
     assets,
@@ -731,6 +914,7 @@ export function useStudioStore() {
     processingConfig,
     extractionSettings,
     convertSettings,
+    addTextSettings,
     gifSettings,
     spriteSettings,
     autoSegmentSupported,
@@ -748,6 +932,7 @@ export function useStudioStore() {
     importFiles,
     removeAssetsById,
     removeAll,
+    reorderLibraryAssets,
     toggleSelect,
     selectAll,
     clearSelection,
@@ -757,6 +942,7 @@ export function useStudioStore() {
     setProcessingConfig,
     setExtractionSettings,
     setConvertSettings,
+    setAddTextSettings,
     setGifSettings,
     setSpriteSettings,
     setKindFilter,
