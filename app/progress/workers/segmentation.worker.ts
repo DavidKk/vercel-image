@@ -3,7 +3,7 @@
  * Handles model initialization and image processing in a separate thread
  */
 
-import { buildRemoveBackgroundConfig } from '../core/model-config'
+import { type BackgroundRemovalUserConfig, buildLibraryConfig, getModelCacheKey } from '../core/model-config'
 import type { SegmentationProgress } from '../core/segmentation-worker'
 import { formatBytes } from '../core/utils'
 
@@ -304,19 +304,53 @@ interface WorkerResponse {
   payload?: any
 }
 
-let removeBackground: ((input: Blob, config?: any) => Promise<Blob>) | null = null
+type ProcessFn = (input: Blob, config?: Record<string, unknown>) => Promise<Blob>
+
+let removeBackground: ProcessFn | null = null
+let removeForeground: ProcessFn | null = null
+let segmentForeground: ProcessFn | null = null
 let isModelInitialized = false
+let loadedModelCacheKey: string | null = null
+
+/** Load library functions */
+async function loadLibrary() {
+  const module = await import('@imgly/background-removal')
+  removeBackground = module.removeBackground
+  removeForeground = module.removeForeground
+  segmentForeground = module.segmentForeground
+}
+
+/**
+ * Run the configured processing function on a blob
+ * @param blob Input image blob
+ * @param userConfig User configuration
+ * @param libraryConfig Library config with progress callback
+ * @returns Processed blob
+ */
+async function runProcessing(blob: Blob, userConfig: BackgroundRemovalUserConfig, libraryConfig: ReturnType<typeof buildLibraryConfig>): Promise<Blob> {
+  if (!removeBackground || !removeForeground || !segmentForeground) {
+    throw new Error('Library not loaded')
+  }
+
+  switch (userConfig.mode) {
+    case 'removeForeground':
+      return removeForeground(blob, libraryConfig)
+    case 'segmentForeground':
+      return segmentForeground(blob, libraryConfig)
+    default:
+      return removeBackground(blob, libraryConfig)
+  }
+}
 
 /** Initialize the background removal model */
-async function initializeModel(onProgress: (progress: SegmentationProgress) => void): Promise<boolean> {
+async function initializeModel(userConfig: BackgroundRemovalUserConfig, onProgress: (progress: SegmentationProgress) => void): Promise<boolean> {
   try {
-    if (isModelInitialized) {
+    const cacheKey = getModelCacheKey(userConfig)
+    if (isModelInitialized && loadedModelCacheKey === cacheKey) {
       return true
     }
 
-    /** Dynamically import @imgly/background-removal */
-    const module = await import('@imgly/background-removal')
-    removeBackground = module.removeBackground
+    await loadLibrary()
 
     /** Track download progress */
     const progressState: ProgressState = {
@@ -356,7 +390,7 @@ async function initializeModel(onProgress: (progress: SegmentationProgress) => v
     const testBlob = await testCanvas.convertToBlob({ type: 'image/png' })
     if (!testBlob) return false
 
-    const config = buildRemoveBackgroundConfig('medium', progressCallback)
+    const config = buildLibraryConfig(userConfig, progressCallback)
 
     // If download is complete, show initializing status
     if (progressState.hasStartedDownload && progressState.totalExpected > 0 && progressState.totalDownloaded >= progressState.totalExpected) {
@@ -369,7 +403,7 @@ async function initializeModel(onProgress: (progress: SegmentationProgress) => v
       })
     }
 
-    await removeBackground(testBlob, config)
+    await runProcessing(testBlob, userConfig, config)
 
     if (!progressState.hasStartedDownload || (progressState.totalExpected > 0 && progressState.totalDownloaded >= progressState.totalExpected)) {
       onProgress({
@@ -382,6 +416,7 @@ async function initializeModel(onProgress: (progress: SegmentationProgress) => v
     }
 
     isModelInitialized = true
+    loadedModelCacheKey = cacheKey
     return true
   } catch (error) {
     // eslint-disable-next-line no-console
@@ -391,8 +426,14 @@ async function initializeModel(onProgress: (progress: SegmentationProgress) => v
 }
 
 /** Process image for background removal */
-async function processImage(imageData: ImageData, onProgress: (progress: SegmentationProgress) => void): Promise<ImageData | null> {
+async function processImage(imageData: ImageData, userConfig: BackgroundRemovalUserConfig, onProgress: (progress: SegmentationProgress) => void): Promise<ImageData | null> {
   try {
+    const cacheKey = getModelCacheKey(userConfig)
+    if (!isModelInitialized || loadedModelCacheKey !== cacheKey) {
+      const ready = await initializeModel(userConfig, onProgress)
+      if (!ready) return null
+    }
+
     if (!removeBackground) {
       throw new Error('Model not initialized')
     }
@@ -422,8 +463,8 @@ async function processImage(imageData: ImageData, onProgress: (progress: Segment
       onProgress({ progress: 0, status: 'Initializing AI model...', downloadedBytes: 0, totalBytes: 0 })
     }
 
-    const config = buildRemoveBackgroundConfig('medium', progressCallback)
-    const result = await removeBackground(blob, config)
+    const config = buildLibraryConfig(userConfig, progressCallback)
+    const result = await runProcessing(blob, userConfig, config)
 
     // Model processing complete, no longer initializing
     if (progressState.hasStartedDownload && progressState.totalExpected > 0 && progressState.totalDownloaded >= progressState.totalExpected) {
@@ -451,11 +492,15 @@ async function processImage(imageData: ImageData, onProgress: (progress: Segment
 
     imageBitmap.close()
 
-    /** Apply edge processing in worker */
-    const smoothed = smoothEdges(resultImageData, 1)
-    const feathered = applyFeather(smoothed, 1)
+    /** Apply edge post-processing in worker */
+    if (userConfig.edgeSmooth > 0) {
+      resultImageData = smoothEdges(resultImageData, userConfig.edgeSmooth)
+    }
+    if (userConfig.edgeFeather > 0) {
+      resultImageData = applyFeather(resultImageData, userConfig.edgeFeather)
+    }
 
-    return feathered
+    return resultImageData
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Image processing failed in worker:', error)
@@ -490,19 +535,20 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
           self.postMessage({ type: 'PROGRESS', payload: progress } as WorkerResponse)
         }
 
-        const success = await initializeModel(progressCallback)
-        self.postMessage({ type: 'RESULT', payload: { success } } as WorkerResponse)
+        const userConfig = (payload?.config ?? {}) as BackgroundRemovalUserConfig
+        const success = await initializeModel(userConfig, progressCallback)
+        self.postMessage({ type: 'RESULT', payload: { success, modelCacheKey: getModelCacheKey(userConfig) } } as WorkerResponse)
         break
       }
 
       case 'PROCESS_IMAGE': {
-        const { imageData } = payload as { imageData: ImageData }
+        const { imageData, config } = payload as { imageData: ImageData; config: BackgroundRemovalUserConfig }
 
         const progressCallback = (progress: SegmentationProgress) => {
           self.postMessage({ type: 'PROGRESS', payload: progress } as WorkerResponse)
         }
 
-        const result = await processImage(imageData, progressCallback)
+        const result = await processImage(imageData, config, progressCallback)
         self.postMessage({ type: 'RESULT', payload: { imageData: result } } as WorkerResponse)
         break
       }

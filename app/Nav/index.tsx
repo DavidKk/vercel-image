@@ -1,7 +1,10 @@
-import FeatherIcon from 'feather-icons-react'
-import Link from 'next/link'
+'use client'
 
-import { name, repository } from '@/package.json'
+import Link from 'next/link'
+import { FiGithub } from 'react-icons/fi'
+
+import { useLayoutVisibility } from '@/hooks/useLayoutVisibility'
+import packageJson from '@/package.json'
 
 import { DEFAULT_NAV } from './constants'
 
@@ -15,17 +18,22 @@ interface NavProps {
   nav?: Record<string, NavItem[]>
 }
 
-const DEFAULT_TITLE = name.replace('vercel', '').split('-').join(' ')
-const GITHUB_URL = repository.url
+const DEFAULT_TITLE = 'Studio'
+const GITHUB_URL = packageJson.repository?.url
 
 export function Nav(props: NavProps) {
   const { title = DEFAULT_TITLE, nav = DEFAULT_NAV } = props
+  const shouldHide = useLayoutVisibility()
+
+  if (shouldHide) {
+    return null
+  }
 
   return (
     <nav className="w-full p-4 bg-indigo-500 text-white">
       <div className="container-md flex items-center justify-center md:justify-start flex-wrap md:flex-nowrap gap-y-2">
         <h1 className="text-xl font-bold text-center md:text-left">
-          <Link className="whitespace-nowrap capitalize" href="/">
+          <Link className="whitespace-nowrap capitalize" href="/studio">
             {title}
           </Link>
         </h1>
@@ -55,7 +63,7 @@ export function Nav(props: NavProps) {
 
         {GITHUB_URL && (
           <a className="ml-auto absolute top-4 right-4 md:static" href={GITHUB_URL} target="_blank" rel="noreferrer">
-            <FeatherIcon icon="github" />
+            <FiGithub className="h-5 w-5" aria-hidden />
           </a>
         )}
       </div>

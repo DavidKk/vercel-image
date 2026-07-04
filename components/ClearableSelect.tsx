@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { FiChevronDown, FiX } from 'react-icons/fi'
 
 export interface Option {
   value: any
@@ -53,14 +54,12 @@ export default function ClearableSelect(props: ClearableSelectProps) {
 
       <div className="flex h-4 w-4 items-center justify-center absolute right-2 top-1/2 transform -translate-y-1/2">
         {!!selectedOption && clearable ? (
-          <button onClick={clearSelection} className="text-gray-500 hover:text-gray-800">
-            &#10005;
+          <button type="button" onClick={clearSelection} className="text-gray-500 hover:text-gray-800" aria-label="Clear selection">
+            <FiX className="h-4 w-4" aria-hidden />
           </button>
         ) : (
           <div className="pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+            <FiChevronDown className="h-4 w-4 text-gray-500" aria-hidden />
           </div>
         )}
       </div>

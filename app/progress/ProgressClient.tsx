@@ -1,64 +1,94 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { FiDownload, FiImage, FiX } from 'react-icons/fi'
 
+import { Spinner } from '@/components/Spinner'
+
+import { BatchPreviewGrid } from './components/BatchPreviewGrid'
 import { PreviewPane } from './components/PreviewPane'
+import { ProcessingSettings } from './components/ProcessingSettings'
 import { ProgressBar } from './components/ProgressBar'
-import { canvasToBlob, createCanvasFromImage, createCanvasFromImageData, createImageDataFromImage, downloadImage, fileToImage } from './core/image-utils'
-import { autoSegmentPerson, checkAutoSegmentSupport, initializeModel, type SegmentationProgress } from './core/segmentation-worker'
+import { countByStatus, createImageItemsFromFiles, downloadAllImageItems, downloadImageItem, processImageItem, updateImageItem } from './core/batch-utils'
+import { type BackgroundRemovalUserConfig, createDefaultProcessingConfig, DEFAULT_BACKGROUND_REMOVAL_CONFIG, getModelCacheKey, getProcessingModeLabel } from './core/model-config'
+import { checkAutoSegmentSupport, initializeModel, type SegmentationProgress } from './core/segmentation-worker'
+import type { ImageItem } from './core/types'
+
+type ViewMode = 'grid' | 'detail'
 
 export function ProgressClient() {
-  const [image, setImage] = useState<HTMLImageElement | null>(null)
-  const [processedImageData, setProcessedImageData] = useState<ImageData | null>(null)
+  const [items, setItems] = useState<ImageItem[]>([])
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>('grid')
+  const [showProcessed, setShowProcessed] = useState(true)
   const [autoSegmentSupported, setAutoSegmentSupported] = useState(false)
-  const [isAutoSegmenting, setIsAutoSegmenting] = useState(false)
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false)
+  const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0 })
   const [isModelInitializing, setIsModelInitializing] = useState(false)
   const [progress, setProgress] = useState<SegmentationProgress>({ progress: 0, status: '' })
   const [showProgress, setShowProgress] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false)
+  const [processingConfig, setProcessingConfig] = useState<BackgroundRemovalUserConfig>(DEFAULT_BACKGROUND_REMOVAL_CONFIG)
+  const [loadedModelCacheKey, setLoadedModelCacheKey] = useState<string | null>(null)
 
-  /** Check auto-segmentation support and initialize model */
+  const selectedItem = useMemo(() => items.find((item) => item.id === selectedId) ?? null, [items, selectedId])
+  const needsModelReload = useMemo(() => loadedModelCacheKey !== null && getModelCacheKey(processingConfig) !== loadedModelCacheKey, [loadedModelCacheKey, processingConfig])
+  const processButtonLabel = useMemo(() => getProcessingModeLabel(processingConfig.mode), [processingConfig.mode])
+
+  const pendingCount = useMemo(() => countByStatus(items, 'pending'), [items])
+  const errorCount = useMemo(() => countByStatus(items, 'error'), [items])
+  const doneCount = useMemo(() => countByStatus(items, 'done'), [items])
+  const processableCount = pendingCount + errorCount
+
+  /** Initialize model with current config */
+  const reloadModel = useCallback(async (config: BackgroundRemovalUserConfig) => {
+    setIsModelInitializing(true)
+    let hasStartedDownload = false
+
+    const ready = await initializeModel(config, (modelProgress) => {
+      setProgress(modelProgress)
+      if (modelProgress.downloadedBytes !== undefined && modelProgress.downloadedBytes > 0) {
+        if (!hasStartedDownload) {
+          hasStartedDownload = true
+          setShowProgress(true)
+          setIsDownloading(true)
+        }
+      }
+      if (modelProgress.progress === 100) {
+        setIsDownloading(false)
+      }
+    })
+
+    setIsModelInitializing(false)
+    if (ready) {
+      setLoadedModelCacheKey(getModelCacheKey(config))
+      if (!hasStartedDownload) {
+        setIsDownloading(false)
+        setShowProgress(false)
+      }
+    }
+    return ready
+  }, [])
+
+  /** Check auto-segmentation support, resolve defaults, and initialize model */
   useEffect(() => {
     let mounted = true
 
     const init = async () => {
+      const defaultConfig = await createDefaultProcessingConfig()
+      if (!mounted) return
+
+      setProcessingConfig(defaultConfig)
+
       const supported = await checkAutoSegmentSupport()
       if (!mounted) return
 
       setAutoSegmentSupported(supported)
 
       if (supported) {
-        /** Preload model */
-        setIsModelInitializing(true)
-        let hasStartedDownload = false
-
-        const ready = await initializeModel((progress) => {
-          if (mounted) {
-            setProgress(progress)
-            /** If progress callback is called, download has started */
-            if (progress.downloadedBytes !== undefined && progress.downloadedBytes > 0) {
-              if (!hasStartedDownload) {
-                hasStartedDownload = true
-                setShowProgress(true)
-                setIsDownloading(true)
-              }
-            }
-            /** If download is complete (progress === 100), allow usage but don't hide progress bar immediately */
-            if (progress.progress === 100) {
-              setIsDownloading(false)
-            }
-          }
-        })
-
-        if (mounted) {
-          setIsModelInitializing(false)
-          /** If model is ready and download hasn't started (cached), ensure download state is complete and don't show progress bar */
-          if (ready && !hasStartedDownload) {
-            setIsDownloading(false)
-            setShowProgress(false)
-          }
-        }
+        await reloadModel(defaultConfig)
       }
     }
 
@@ -67,51 +97,30 @@ export function ProgressClient() {
     return () => {
       mounted = false
     }
+  }, [reloadModel])
+
+  /** Reset settings to defaults with runtime GPU detection */
+  const handleResetConfig = useCallback(async () => {
+    const defaultConfig = await createDefaultProcessingConfig()
+    setProcessingConfig(defaultConfig)
   }, [])
 
-  /** Hide progress bar when download is complete (100%) and not initializing */
+  /** Hide progress bar when download is complete */
   useEffect(() => {
     if (progress.progress === 100 && !progress.isInitializing) {
       setShowProgress(false)
     }
   }, [progress.progress, progress.isInitializing])
 
-  /** Auto AI segmentation for person */
-  const handleAutoSegment = useCallback(async () => {
-    if (!image || !autoSegmentSupported) {
-      // eslint-disable-next-line no-console
-      console.warn('Auto segmentation not available:', { image: !!image, autoSegmentSupported })
-      return
-    }
-
-    setIsAutoSegmenting(true)
-
+  /** Add files to the batch queue */
+  const addFiles = useCallback(async (files: FileList | File[]) => {
     try {
-      /** Convert image to ImageData for worker */
-      const imageData = createImageDataFromImage(image)
+      const newItems = await createImageItemsFromFiles(files)
+      if (newItems.length === 0) return
 
-      /** Process image without showing progress bar */
-      const segmentedData = await autoSegmentPerson(imageData)
-
-      if (segmentedData) {
-        /** Edge processing is done in worker, use result directly */
-        setProcessedImageData(segmentedData)
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Auto segmentation failed:', error)
-    } finally {
-      setIsAutoSegmenting(false)
-    }
-  }, [image, autoSegmentSupported])
-
-  /** Process file */
-  const processFile = useCallback(async (file: File) => {
-    try {
-      const img = await fileToImage(file)
-      setImage(img)
-      /** Clear previous processing result when selecting new image */
-      setProcessedImageData(null)
+      setItems((prev) => [...prev, ...newItems])
+      setSelectedId((prev) => prev ?? newItems[0].id)
+      setViewMode('grid')
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Image loading failed:', error)
@@ -121,11 +130,12 @@ export function ProgressClient() {
   /** Handle file upload */
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0]
-      if (!file) return
-      await processFile(file)
+      const files = e.target.files
+      if (!files || files.length === 0) return
+      await addFiles(files)
+      e.target.value = ''
     },
-    [processFile]
+    [addFiles]
   )
 
   /** Handle drag and drop upload */
@@ -133,12 +143,12 @@ export function ProgressClient() {
     async (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault()
       setIsDragging(false)
-      const file = e.dataTransfer.files?.[0]
-      if (file && file.type.startsWith('image/')) {
-        await processFile(file)
+      const files = e.dataTransfer.files
+      if (files.length > 0) {
+        await addFiles(files)
       }
     },
-    [processFile]
+    [addFiles]
   )
 
   const handleDragOver = useCallback(
@@ -166,118 +176,285 @@ export function ProgressClient() {
     [isDownloading, isModelInitializing]
   )
 
-  /** Download processed image or original image */
-  const handleDownload = useCallback(async () => {
-    if (processedImageData) {
-      // Download processed image
-      const canvas = createCanvasFromImageData(processedImageData)
-      const blob = await canvasToBlob(canvas)
-      downloadImage(blob, 'ai-processed.png')
-    } else if (image) {
-      // Download original image
-      const canvas = createCanvasFromImage(image)
-      const blob = await canvasToBlob(canvas)
-      downloadImage(blob, 'image.png')
+  /** Batch AI processing */
+  const handleBatchProcess = useCallback(async () => {
+    if (!autoSegmentSupported || items.length === 0) return
+
+    const toProcess = items.filter((item) => item.status === 'pending' || item.status === 'error')
+    if (toProcess.length === 0) return
+
+    if (needsModelReload) {
+      const ready = await reloadModel(processingConfig)
+      if (!ready) return
     }
-  }, [processedImageData, image])
+
+    setIsBatchProcessing(true)
+    setBatchProgress({ current: 0, total: toProcess.length })
+
+    for (let i = 0; i < toProcess.length; i++) {
+      const item = toProcess[i]
+      const itemId = item.id
+
+      setItems((prev) => updateImageItem(prev, itemId, { status: 'processing', errorMessage: undefined }))
+      setBatchProgress({ current: i + 1, total: toProcess.length })
+
+      const result = await processImageItem(item, processingConfig)
+
+      setItems((prev) =>
+        updateImageItem(prev, itemId, {
+          processedImageData: result.processedImageData,
+          status: result.status,
+          errorMessage: result.errorMessage,
+        })
+      )
+    }
+
+    setIsBatchProcessing(false)
+    setBatchProgress({ current: 0, total: 0 })
+  }, [autoSegmentSupported, items, needsModelReload, processingConfig, reloadModel])
+
+  /** Manually reload model after config change */
+  const handleReloadModel = useCallback(async () => {
+    await reloadModel(processingConfig)
+  }, [processingConfig, reloadModel])
+
+  /** Remove a single item from the queue */
+  const handleRemoveItem = useCallback(
+    (id: string) => {
+      setItems((prev) => {
+        const next = prev.filter((item) => item.id !== id)
+        if (selectedId === id) {
+          setSelectedId(next.length > 0 ? next[0].id : null)
+          setViewMode('grid')
+        }
+        return next
+      })
+    },
+    [selectedId]
+  )
+
+  /** Clear all items */
+  const handleClearAll = useCallback(() => {
+    setItems([])
+    setSelectedId(null)
+    setViewMode('grid')
+  }, [])
+
+  /** Download selected item */
+  const handleDownloadSelected = useCallback(async () => {
+    if (!selectedItem) return
+    await downloadImageItem(selectedItem, processingConfig)
+  }, [selectedItem, processingConfig])
+
+  /** Download all processed items */
+  const handleDownloadAll = useCallback(async () => {
+    const downloadable = items.filter((item) => item.processedImageData || item.image)
+    if (downloadable.length === 0) return
+
+    setIsDownloadingAll(true)
+    try {
+      await downloadAllImageItems(downloadable, processingConfig)
+    } finally {
+      setIsDownloadingAll(false)
+    }
+  }, [items, processingConfig])
+
+  /** Select item and switch to detail view */
+  const handleSelectItem = useCallback((id: string) => {
+    setSelectedId(id)
+    setViewMode('detail')
+  }, [])
+
+  const isUploadDisabled = isDownloading || isModelInitializing || isBatchProcessing
 
   return (
-    <div className="bg-gray-100" style={{ height: 'calc(100vh - 124px)' }}>
+    <div className="bg-gray-100" style={{ height: 'calc(100vh - 4rem)' }}>
       <div className="flex h-full">
         {/* Left: Control panel */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-          {/* Control area */}
-          <div className="flex-1 p-6 space-y-4">
-            {/* Select Image button */}
+        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+          <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+            {/* Select Images button */}
             <div>
-              <input type="file" accept="image/*" onChange={handleFileUpload} disabled={isDownloading || isModelInitializing} className="hidden" id="file-upload" />
+              <input type="file" accept="image/*" multiple onChange={handleFileUpload} disabled={isUploadDisabled} className="hidden" id="file-upload" />
               <label
                 htmlFor="file-upload"
                 className={`flex items-center justify-center w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-all duration-300 cursor-pointer border border-gray-300 ${
-                  isDownloading || isModelInitializing ? 'opacity-50 cursor-not-allowed' : ''
+                  isUploadDisabled ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                Select Image
+                <FiImage className="mr-2 h-5 w-5" aria-hidden />
+                Select Images
               </label>
+              <p className="text-xs text-gray-500 mt-1 text-center">Supports multiple files</p>
             </div>
 
-            {/* AI auto background removal button */}
-            {autoSegmentSupported && handleAutoSegment && (
+            {/* AI settings */}
+            {autoSegmentSupported && (
+              <ProcessingSettings
+                config={processingConfig}
+                onChange={setProcessingConfig}
+                onReset={handleResetConfig}
+                disabled={isUploadDisabled}
+                needsModelReload={needsModelReload}
+                onReloadModel={handleReloadModel}
+                isReloading={isModelInitializing}
+              />
+            )}
+
+            {/* Batch AI processing */}
+            {autoSegmentSupported && (
               <button
-                onClick={handleAutoSegment}
-                disabled={isAutoSegmenting || isDownloading || isModelInitializing || !image}
+                onClick={handleBatchProcess}
+                disabled={isBatchProcessing || isUploadDisabled || items.length === 0 || processableCount === 0}
                 className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-700 hover:via-indigo-700 hover:to-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
               >
-                {isAutoSegmenting ? (
+                {isBatchProcessing ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
-                    Processing...
+                    <Spinner className="-ml-1 mr-2 h-5 w-5" />
+                    Processing {batchProgress.current}/{batchProgress.total}...
                   </span>
                 ) : isModelInitializing ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      ></path>
-                    </svg>
+                    <Spinner className="-ml-1 mr-2 h-5 w-5" />
                     <span className="mr-2 font-bold">AI</span>
                     Initializing...
                   </span>
                 ) : (
                   <span className="flex items-center justify-center">
                     <span className="mr-2 font-bold">AI</span>
-                    Remove Background
+                    {processButtonLabel} {processableCount > 0 ? `(${processableCount})` : ''}
                   </span>
                 )}
               </button>
             )}
 
-            {/* Download button */}
-            {image && (
+            {/* View mode toggle */}
+            {items.length > 0 && (
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => selectedId && setViewMode('detail')}
+                  disabled={!selectedId}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                    viewMode === 'detail' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  Detail
+                </button>
+              </div>
+            )}
+
+            {/* Preview toggle: original vs processed */}
+            {items.length > 0 && doneCount > 0 && (
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowProcessed(false)}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${!showProcessed ? 'bg-gray-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  Original
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProcessed(true)}
+                  className={`flex-1 py-2 text-sm font-medium transition-colors ${showProcessed ? 'bg-gray-700 text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                >
+                  Processed
+                </button>
+              </div>
+            )}
+
+            {/* Download buttons */}
+            {items.length > 0 && (
+              <div className="space-y-2">
+                {selectedItem && viewMode === 'detail' && (
+                  <button
+                    onClick={handleDownloadSelected}
+                    disabled={isUploadDisabled || isDownloadingAll}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                  >
+                    <span className="flex items-center justify-center">
+                      <FiDownload className="mr-2 h-5 w-5" aria-hidden />
+                      {selectedItem.processedImageData ? 'Download PNG' : 'Download Image'}
+                    </span>
+                  </button>
+                )}
+                <button
+                  onClick={handleDownloadAll}
+                  disabled={isUploadDisabled || isDownloadingAll || items.length === 0}
+                  className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                >
+                  <span className="flex items-center justify-center">
+                    {isDownloadingAll ? (
+                      <>
+                        <Spinner className="-ml-1 mr-2 h-5 w-5" />
+                        Downloading...
+                      </>
+                    ) : (
+                      <>
+                        <FiDownload className="mr-2 h-5 w-5" aria-hidden />
+                        Download All ({items.length})
+                      </>
+                    )}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Clear all */}
+            {items.length > 0 && (
               <button
-                onClick={handleDownload}
-                disabled={isDownloading || isModelInitializing}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                onClick={handleClearAll}
+                disabled={isBatchProcessing}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded-lg transition-all duration-300 border border-gray-300 disabled:opacity-50"
               >
-                <span className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  {processedImageData ? 'Download PNG' : 'Download Image'}
-                </span>
+                Clear All
               </button>
             )}
 
-            {/* Status messages - only show error */}
-            {!autoSegmentSupported && (
-              <div className="mt-6">
-                <div className="text-xs text-red-700 bg-red-50 border border-red-200 p-3 rounded-lg">AI feature is not available, please check browser support</div>
+            {/* Image list */}
+            {items.length > 0 && (
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs font-medium text-gray-500 mb-2">
+                  {items.length} image{items.length > 1 ? 's' : ''} · {doneCount} processed
+                </p>
+                <ul className="space-y-1 max-h-48 overflow-y-auto">
+                  {items.map((item) => (
+                    <li key={item.id}>
+                      <div
+                        className={`w-full flex items-center justify-between px-2 py-1.5 rounded text-left text-xs transition-colors cursor-pointer ${
+                          selectedId === item.id ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50 text-gray-700'
+                        }`}
+                      >
+                        <button type="button" onClick={() => handleSelectItem(item.id)} className="truncate flex-1 mr-2 text-left">
+                          {item.file.name}
+                        </button>
+                        <button type="button" onClick={() => handleRemoveItem(item.id)} className="text-gray-400 hover:text-red-500 shrink-0" aria-label="Remove">
+                          <FiX className="h-3.5 w-3.5" aria-hidden />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
+            )}
+
+            {!autoSegmentSupported && (
+              <div className="text-xs text-red-700 bg-red-50 border border-red-200 p-3 rounded-lg">AI feature is not available, please check browser support</div>
             )}
           </div>
         </div>
 
-        {/* Right: Image preview area */}
-        <div className="flex-1 bg-gray-50 flex items-center justify-center overflow-hidden relative">
-          {/* Backdrop overlay during initialization */}
+        {/* Right: Preview area */}
+        <div className="flex-1 bg-gray-50 flex flex-col overflow-hidden relative">
+          {/* Model initialization overlay */}
           {(isModelInitializing || (showProgress && (progress.progress < 100 || progress.isInitializing))) && (
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-auto">
               <div className="w-full max-w-xl px-6">
@@ -293,19 +470,29 @@ export function ProgressClient() {
             </div>
           )}
 
-          {!image ? (
+          {/* Batch processing overlay */}
+          {isBatchProcessing && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-white rounded-lg shadow-lg px-4 py-2 flex items-center gap-2">
+              <Spinner className="h-4 w-4" color="text-indigo-600" />
+              <span className="text-sm font-medium text-gray-700">
+                Processing {batchProgress.current}/{batchProgress.total}
+              </span>
+            </div>
+          )}
+
+          {items.length === 0 ? (
             <div
-              onDrop={isDownloading || isModelInitializing ? undefined : handleDrop}
-              onDragOver={isDownloading || isModelInitializing ? undefined : handleDragOver}
-              onDragEnter={isDownloading || isModelInitializing ? undefined : handleDragEnter}
-              onDragLeave={isDownloading || isModelInitializing ? undefined : handleDragLeave}
-              className="w-full max-w-md"
+              onDrop={isUploadDisabled ? undefined : handleDrop}
+              onDragOver={isUploadDisabled ? undefined : handleDragOver}
+              onDragEnter={isUploadDisabled ? undefined : handleDragEnter}
+              onDragLeave={isUploadDisabled ? undefined : handleDragLeave}
+              className="flex-1 flex items-center justify-center p-6"
             >
-              <input type="file" accept="image/*" onChange={handleFileUpload} disabled={isDownloading || isModelInitializing} className="hidden" id="file-upload-preview" />
+              <input type="file" accept="image/*" multiple onChange={handleFileUpload} disabled={isUploadDisabled} className="hidden" id="file-upload-preview" />
               <label
                 htmlFor="file-upload-preview"
-                className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-2xl transition-all duration-300 ${
-                  isDownloading || isModelInitializing
+                className={`flex flex-col items-center justify-center p-16 border-2 border-dashed rounded-2xl transition-all duration-300 w-full max-w-md ${
+                  isUploadDisabled
                     ? 'border-gray-300 bg-gray-100 cursor-not-allowed opacity-50'
                     : isDragging
                       ? 'border-indigo-500 bg-indigo-50 scale-105 shadow-lg cursor-pointer'
@@ -313,29 +500,24 @@ export function ProgressClient() {
                 }`}
               >
                 <div className="flex items-center mb-2">
-                  <svg
-                    className={`w-5 h-5 mr-2 transition-colors duration-300 ${isDragging ? 'text-indigo-600' : 'text-gray-700'}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
+                  <FiImage className={`mr-2 h-5 w-5 transition-colors duration-300 ${isDragging ? 'text-indigo-600' : 'text-gray-700'}`} aria-hidden />
                   <span className={`font-semibold text-xl transition-colors duration-300 ${isDragging ? 'text-indigo-600' : 'text-gray-700'}`}>
-                    {isDragging ? 'Drop to upload' : 'Select Image'}
+                    {isDragging ? 'Drop to upload' : 'Select Images'}
                   </span>
                 </div>
-                <span className="text-xs text-gray-500">{isDragging ? 'Or click here to select file' : 'Supports JPG, PNG, WEBP formats, or drag and drop image here'}</span>
+                <span className="text-xs text-gray-500 text-center">
+                  {isDragging ? 'Or click here to select files' : 'Supports JPG, PNG, WEBP — multiple files or drag and drop'}
+                </span>
               </label>
             </div>
-          ) : (
-            <PreviewPane imageData={processedImageData || undefined} image={processedImageData ? undefined : image} />
-          )}
+          ) : viewMode === 'grid' ? (
+            <BatchPreviewGrid items={items} selectedId={selectedId} showProcessed={showProcessed} onSelect={handleSelectItem} />
+          ) : selectedItem ? (
+            <PreviewPane
+              imageData={showProcessed && selectedItem.processedImageData ? selectedItem.processedImageData : undefined}
+              image={showProcessed && selectedItem.processedImageData ? undefined : selectedItem.image}
+            />
+          ) : null}
         </div>
       </div>
     </div>

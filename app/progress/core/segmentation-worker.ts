@@ -3,6 +3,8 @@
  * Provides a clean API for using the Web Worker
  */
 
+import type { BackgroundRemovalUserConfig } from './model-config'
+
 export interface SegmentationProgress {
   progress: number // 0-100
   status: string
@@ -14,12 +16,21 @@ export interface SegmentationProgress {
 /** Worker message types */
 interface WorkerMessage {
   type: 'INIT_MODEL' | 'PROCESS_IMAGE' | 'CHECK_SUPPORT'
-  payload?: any
+  payload?: {
+    config?: BackgroundRemovalUserConfig
+    imageData?: ImageData
+  }
 }
 
 interface WorkerResponse {
   type: 'PROGRESS' | 'RESULT' | 'ERROR' | 'SUPPORT'
-  payload?: any
+  payload?: {
+    supported?: boolean
+    success?: boolean
+    imageData?: ImageData | null
+    error?: string
+    modelCacheKey?: string
+  }
 }
 
 let worker: Worker | null = null
@@ -34,7 +45,10 @@ function getWorker(): Worker {
   return worker
 }
 
-/** Check if auto segmentation is supported */
+/**
+ * Check if auto segmentation is supported
+ * @returns Whether the library can be loaded
+ */
 export async function checkAutoSegmentSupport(): Promise<boolean> {
   return new Promise((resolve) => {
     const w = getWorker()
@@ -51,8 +65,13 @@ export async function checkAutoSegmentSupport(): Promise<boolean> {
   })
 }
 
-/** Initialize model in worker */
-export async function initializeModel(onProgress?: (progress: SegmentationProgress) => void): Promise<boolean> {
+/**
+ * Initialize model in worker
+ * @param config User processing configuration
+ * @param onProgress Optional progress callback
+ * @returns Whether initialization succeeded
+ */
+export async function initializeModel(config: BackgroundRemovalUserConfig, onProgress?: (progress: SegmentationProgress) => void): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const w = getWorker()
 
@@ -69,12 +88,18 @@ export async function initializeModel(onProgress?: (progress: SegmentationProgre
     }
 
     w.addEventListener('message', handler)
-    w.postMessage({ type: 'INIT_MODEL' } as WorkerMessage)
+    w.postMessage({ type: 'INIT_MODEL', payload: { config } } as WorkerMessage)
   })
 }
 
-/** Process image in worker */
-export async function autoSegmentPerson(imageData: ImageData, onProgress?: (progress: SegmentationProgress) => void): Promise<ImageData | null> {
+/**
+ * Process image in worker
+ * @param imageData Source image data
+ * @param config User processing configuration
+ * @param onProgress Optional progress callback
+ * @returns Processed image data or null
+ */
+export async function processImage(imageData: ImageData, config: BackgroundRemovalUserConfig, onProgress?: (progress: SegmentationProgress) => void): Promise<ImageData | null> {
   return new Promise((resolve, reject) => {
     const w = getWorker()
 
@@ -91,7 +116,7 @@ export async function autoSegmentPerson(imageData: ImageData, onProgress?: (prog
     }
 
     w.addEventListener('message', handler)
-    w.postMessage({ type: 'PROCESS_IMAGE', payload: { imageData } } as WorkerMessage)
+    w.postMessage({ type: 'PROCESS_IMAGE', payload: { imageData, config } } as WorkerMessage)
   })
 }
 

@@ -6,10 +6,12 @@ interface PreviewPaneProps {
   imageData?: ImageData | null
   image?: HTMLImageElement | null
   className?: string
+  /** When true, skip white canvas fill so transparency shows the checkerboard behind */
+  transparentBackground?: boolean
 }
 
 export function PreviewPane(props: PreviewPaneProps) {
-  const { imageData, image, className } = props
+  const { imageData, image, className, transparentBackground = false } = props
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -62,9 +64,13 @@ export function PreviewPane(props: PreviewPaneProps) {
     canvas.width = containerWidth
     canvas.height = containerHeight
 
-    // Fill with white background
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    // Clear canvas; use transparent background in Studio preview
+    if (transparentBackground) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+    } else {
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+    }
 
     // Calculate base fit scale (to fit image in container)
     const imageAspect = imageInfo.width / imageInfo.height
@@ -112,7 +118,7 @@ export function PreviewPane(props: PreviewPaneProps) {
     }
 
     ctx.restore()
-  }, [imageData, image, scale, offsetX, offsetY, getBaseImageInfo])
+  }, [imageData, image, scale, offsetX, offsetY, getBaseImageInfo, transparentBackground])
 
   // Reset zoom and pan when image changes
   useEffect(() => {
@@ -319,7 +325,7 @@ export function PreviewPane(props: PreviewPaneProps) {
 
   return (
     <div ref={containerRef} className={`w-full h-full p-4 ${className || ''}`}>
-      <canvas ref={canvasRef} className="w-full h-full shadow-lg" style={{ display: 'block' }} />
+      <canvas ref={canvasRef} className={`block h-full w-full ${transparentBackground ? '' : 'shadow-lg'}`} style={{ display: 'block' }} />
     </div>
   )
 }

@@ -1,9 +1,9 @@
-import { ProgressClient } from './ProgressClient'
+import { redirect } from 'next/navigation'
 
 /**
- * Progress page - AI image processing tools
- * Server Component entry point
+ * Legacy progress route redirects to Studio
+ * @returns Never returns (redirect)
  */
 export default function ProgressPage() {
-  return <ProgressClient />
+  redirect('/studio')
 }

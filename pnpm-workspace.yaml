@@ -2,4 +2,5 @@ onlyBuiltDependencies:
   - '@vercel/speed-insights'
   - canvas
   - core-js
+  - protobufjs
   - sharp
