@@ -6,22 +6,23 @@
 import { type ComponentPropsWithoutRef, type ElementType, forwardRef, type ReactNode } from 'react'
 
 /** Unified single-row panel header height and layout */
-export const STUDIO_PANEL_HEADER_CLASS = 'flex h-10 shrink-0 items-center gap-2 border-b border-[var(--studio-panel-border)] bg-white px-3'
+export const STUDIO_PANEL_HEADER_CLASS = 'flex h-10 shrink-0 items-center gap-2 border-b border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] px-3'
 
 /** Unified panel title typography */
-export const STUDIO_PANEL_TITLE_CLASS = 'flex-1 truncate text-sm font-semibold text-gray-800'
+export const STUDIO_PANEL_TITLE_CLASS = 'flex-1 truncate text-sm font-semibold text-[var(--studio-surface-fg)]'
 
 /** Secondary header row below the title bar */
-export const STUDIO_PANEL_HEADER_EXTRA_CLASS = 'flex min-h-8 shrink-0 items-center gap-1 border-b border-[var(--studio-panel-border)] px-3 py-1.5'
+export const STUDIO_PANEL_HEADER_EXTRA_CLASS = 'flex min-h-8 shrink-0 items-center gap-1 border-b border-[var(--studio-surface-border)] px-3 py-1.5'
 
 /** Toolbar row below the header (tabs, filters, etc.) */
-export const STUDIO_PANEL_TOOLBAR_CLASS = 'shrink-0 border-b border-[var(--studio-panel-border)] px-3 py-1.5'
+export const STUDIO_PANEL_TOOLBAR_CLASS = 'shrink-0 border-b border-[var(--studio-surface-border)] px-3 py-1.5'
 
 /** Default scrollable panel body (direction applied via StudioPanelBody) */
 export const STUDIO_PANEL_BODY_CLASS = 'flex min-h-0 flex-1'
 
 /** Standard icon button for panel header actions */
-export const STUDIO_PANEL_ICON_BUTTON_CLASS = 'inline-flex h-7 w-7 items-center justify-center rounded-md text-gray-600 transition-colors hover:bg-gray-100 hover:text-blue-600'
+export const STUDIO_PANEL_ICON_BUTTON_CLASS =
+  'inline-flex h-7 w-7 items-center justify-center rounded-studio-md text-[var(--studio-surface-fg-muted)] transition-colors hover:bg-[var(--studio-surface-muted)] hover:text-[var(--studio-accent)]'
 
 interface StudioPanelProps {
   /** Root element tag */
@@ -40,7 +41,7 @@ interface StudioPanelProps {
  */
 export const StudioPanel = forwardRef<HTMLElement, StudioPanelProps>(function StudioPanel(props, ref) {
   const { as: Tag = 'aside', className = '', children } = props
-  const rootClass = ['flex min-h-0 flex-col bg-white', className].filter(Boolean).join(' ')
+  const rootClass = ['flex min-h-0 flex-col bg-[var(--studio-surface-bg)]', className].filter(Boolean).join(' ')
 
   return (
     <Tag ref={ref} className={rootClass}>

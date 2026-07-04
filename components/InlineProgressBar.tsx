@@ -68,7 +68,7 @@ function ProgressTrack(props: { label: string; trackClass: string; barWidthClass
 
   return (
     <div
-      className={`overflow-hidden rounded-full bg-gray-200 ${trackClass} ${widthClass}`}
+      className={`overflow-hidden rounded-full bg-[var(--studio-surface-subtle,#f4f4f5)] ${trackClass} ${widthClass}`}
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
@@ -76,9 +76,9 @@ function ProgressTrack(props: { label: string; trackClass: string; barWidthClass
       aria-label={label}
     >
       {showDeterminate ? (
-        <div className={`rounded-full bg-indigo-600 transition-[width] duration-300 ease-out ${trackClass}`} style={{ width: `${clamped}%` }} />
+        <div className={`rounded-full bg-[var(--studio-accent)] transition-[width] duration-300 ease-out ${trackClass}`} style={{ width: `${clamped}%` }} />
       ) : (
-        <div className={`inline-progress-indeterminate w-1/3 rounded-full bg-indigo-600 ${trackClass}`} />
+        <div className={`inline-progress-indeterminate w-1/3 rounded-full bg-[var(--studio-accent)] ${trackClass}`} />
       )}
     </div>
   )
@@ -106,7 +106,7 @@ export function InlineProgressBar(props: InlineProgressBarProps) {
   if (layout === 'stack') {
     return (
       <div className={rootClass}>
-        <p className={`truncate font-medium text-gray-700 ${labelClass}`}>{label}</p>
+        <p className={`truncate font-medium text-[var(--studio-surface-fg,#18181b)] ${labelClass}`}>{label}</p>
         <div className="mt-1">{track}</div>
       </div>
     )
@@ -114,7 +114,7 @@ export function InlineProgressBar(props: InlineProgressBarProps) {
 
   return (
     <div className={`flex min-w-0 items-center gap-1.5 ${rootClass}`}>
-      <span className={`shrink-0 truncate text-gray-600 ${labelClass}`}>{label}</span>
+      <span className={`shrink-0 truncate text-[var(--studio-surface-fg-muted,#71717a)] ${labelClass}`}>{label}</span>
       {track}
     </div>
   )

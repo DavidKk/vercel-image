@@ -38,7 +38,7 @@ export function RemoveBackgroundOp() {
   return (
     <div className="space-y-3">
       {selectedGifs.length > 0 ? (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--studio-surface-fg-muted)]">
           {selectedGifs.length === 1
             ? 'Animated GIFs are processed frame-by-frame, then merged into a new GIF with 1-bit transparency (hard edges, no semi-transparent feathering).'
             : `${selectedGifs.length} GIFs will be processed frame-by-frame and re-encoded with 1-bit transparency.`}

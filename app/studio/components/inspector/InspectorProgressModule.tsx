@@ -56,7 +56,7 @@ export function InspectorProgressModule() {
   const progressIndeterminate = showModelProgress && progressValue <= 0
 
   return (
-    <div className="flex shrink-0 flex-col items-end gap-1.5 border-t border-[var(--studio-panel-border)] px-3 py-2">
+    <div className="flex shrink-0 flex-col items-end gap-1.5 border-t border-[var(--studio-surface-border)] px-3 py-2">
       {showRunningProgress || showModelProgress ? (
         <InlineProgressBar align="end" label={progressLabel} progress={progressIndeterminate ? undefined : progressValue} indeterminate={progressIndeterminate} size="sm" />
       ) : null}
@@ -67,7 +67,11 @@ export function InspectorProgressModule() {
             <span
               key={job.id}
               className={`shrink-0 rounded px-2 py-0.5 text-[10px] ${
-                job.status === 'done' ? 'bg-green-50 text-green-700' : job.status === 'error' ? 'bg-red-50 text-red-700' : 'bg-gray-100 text-gray-600'
+                job.status === 'done'
+                  ? 'bg-[var(--studio-success-muted)] text-[var(--studio-success-fg)]'
+                  : job.status === 'error'
+                    ? 'bg-red-50 text-red-700'
+                    : 'bg-[var(--studio-surface-subtle)] text-[var(--studio-surface-fg-muted)]'
               }`}
             >
               {formatJobType(job.type)} · {job.status}

@@ -46,15 +46,15 @@ function AssetInfoPopoverContent(props: { asset: StudioAsset; parentName?: strin
 
   return (
     <div className="space-y-1.5">
-      <p className="font-medium text-gray-900 break-all leading-snug">{asset.name}</p>
+      <p className="font-medium text-[var(--studio-surface-fg)] break-all leading-snug">{asset.name}</p>
       <p>
         {asset.width}×{asset.height} · {mimeToLabel(asset.mimeType)}
       </p>
-      <p className="text-gray-500">
+      <p className="text-[var(--studio-surface-fg-muted)]">
         {sourceLabel(asset.source)} · {(asset.size / 1024).toFixed(1)} KB
       </p>
-      {timestampMs != null && <p className="text-gray-500">Timestamp: {timestampMs}ms</p>}
-      {parentName && <p className="text-gray-400">From: {parentName}</p>}
+      {timestampMs != null && <p className="text-[var(--studio-surface-fg-muted)]">Timestamp: {timestampMs}ms</p>}
+      {parentName && <p className="text-[var(--studio-surface-fg-subtle)]">From: {parentName}</p>}
     </div>
   )
 }
@@ -104,8 +104,8 @@ export function AssetCard(props: AssetCardProps) {
     <Popover placement="right" sideAnchorRef={popoverAnchorRef} content={<AssetInfoPopoverContent asset={asset} parentName={parentName} />}>
       <div
         data-library-asset-id={asset.id}
-        className={`group relative aspect-square w-full overflow-hidden rounded-lg bg-gray-100 ring-1 transition-shadow ${
-          isSelected ? 'ring-blue-500 shadow-md' : 'ring-gray-200 hover:ring-gray-300'
+        className={`group relative aspect-square w-full overflow-hidden rounded-studio-md bg-[var(--studio-surface-subtle)] ring-1 transition-shadow ${
+          isSelected ? 'ring-2 ring-[var(--studio-accent)] shadow-studio-md' : 'ring-[var(--studio-surface-border)] hover:ring-[var(--studio-surface-fg-subtle)]'
         }`}
       >
         <button
@@ -125,15 +125,15 @@ export function AssetCard(props: AssetCardProps) {
               ) : null}
             </>
           ) : pending ? (
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Loading</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--studio-surface-fg-subtle)]">Loading</span>
           ) : asset.kind === 'video' && posterFailed ? (
-            <FiVideo className="h-8 w-8 text-gray-400" aria-hidden />
+            <FiVideo className="h-8 w-8 text-[var(--studio-surface-fg-subtle)]" aria-hidden />
           ) : null}
         </button>
 
         {multiSelectMode && isSelected && selectionIndex != null ? (
           <span
-            className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] font-semibold leading-none text-white shadow-sm"
+            className="pointer-events-none absolute left-1.5 top-1.5 z-10 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--studio-accent)] px-1 text-[10px] font-semibold leading-none text-[var(--studio-accent-fg)] shadow-studio-sm"
             aria-hidden
           >
             {selectionIndex}

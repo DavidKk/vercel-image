@@ -41,13 +41,19 @@ export function CompareView(props: CompareViewProps) {
 
   return (
     <div className="flex h-full">
-      <div className="flex-1 flex flex-col border-r border-gray-200">
-        <div className="border-b bg-white/90 px-4 py-2 text-xs font-medium text-gray-500">Original</div>
-        <div className={`flex-1 ${leftImage ? 'studio-checkerboard' : 'bg-white'}`}>{leftImage && <PreviewPane image={leftImage} transparentBackground />}</div>
+      <div className="flex-1 flex flex-col border-r border-[var(--studio-surface-border)]">
+        <div className="border-b border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)]/90 px-4 py-2 text-xs font-medium text-[var(--studio-surface-fg-muted)]">
+          Original
+        </div>
+        <div className={`flex-1 ${leftImage ? 'studio-checkerboard' : 'bg-[var(--studio-canvas-bg)]'}`}>{leftImage && <PreviewPane image={leftImage} transparentBackground />}</div>
       </div>
       <div className="flex flex-1 flex-col">
-        <div className="border-b bg-white/90 px-4 py-2 text-xs font-medium text-gray-500">Processed</div>
-        <div className={`flex-1 ${rightImage ? 'studio-checkerboard' : 'bg-white'}`}>{rightImage && <PreviewPane image={rightImage} transparentBackground />}</div>
+        <div className="border-b border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)]/90 px-4 py-2 text-xs font-medium text-[var(--studio-surface-fg-muted)]">
+          Processed
+        </div>
+        <div className={`flex-1 ${rightImage ? 'studio-checkerboard' : 'bg-[var(--studio-canvas-bg)]'}`}>
+          {rightImage && <PreviewPane image={rightImage} transparentBackground />}
+        </div>
       </div>
     </div>
   )

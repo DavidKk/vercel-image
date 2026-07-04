@@ -15,6 +15,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { useStudio } from '../../context/StudioContext'
 import { getLibrarySidebarFilter, type LibraryKindFilter, type LibrarySidebarFilter, parseLibrarySidebarFilter } from '../../hooks/studio-url-query'
 import { useStudioFileImport } from '../../hooks/useStudioFileImport'
+import { StudioIconSegmentRail } from '../primitives/StudioSegmentedControl'
 import { StudioPanel, StudioPanelBody, StudioPanelHeader, StudioPanelIconButton } from '../StudioPanel'
 import { AssetCard } from './AssetCard'
 import { getLibraryImportConfig } from './library-import'
@@ -66,26 +67,12 @@ function LibrarySidebar(props: { active: LibrarySidebarFilter; onChange: (value:
   const { active, onChange } = props
 
   return (
-    <nav className="flex w-10 shrink-0 flex-col items-center gap-0.5 self-stretch border-r border-gray-100 bg-gray-50 py-2" aria-label="Asset library filter">
-      {SIDEBAR_FILTERS.map(({ value, label, Icon }) => {
-        const isActive = active === value
-        return (
-          <Tooltip key={value} content={label} placement="right">
-            <button
-              type="button"
-              onClick={() => onChange(value)}
-              aria-label={label}
-              aria-pressed={isActive}
-              className={`inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
-                isActive ? 'bg-blue-100 text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-            </button>
-          </Tooltip>
-        )
-      })}
-    </nav>
+    <StudioIconSegmentRail
+      aria-label="Asset library filter"
+      value={active}
+      onChange={onChange}
+      options={SIDEBAR_FILTERS.map(({ value, label, Icon }) => ({ value, label, Icon }))}
+    />
   )
 }
 
@@ -114,7 +101,7 @@ function LibraryMultiSelectToggle(props: { enabled: boolean; onChange: (enabled:
         onClick={() => onChange(!enabled)}
         aria-label="Multi-select mode"
         aria-pressed={enabled}
-        className={enabled ? 'bg-blue-100 text-blue-600 hover:bg-blue-100 hover:text-blue-700' : 'hover:text-blue-600'}
+        className={enabled ? 'bg-[var(--studio-accent-muted)] text-[var(--studio-accent)] hover:bg-[var(--studio-accent-muted)] hover:text-[var(--studio-accent-hover)]' : ''}
       >
         <MdChecklist className="h-4 w-4" />
       </StudioPanelIconButton>
@@ -211,7 +198,7 @@ export function LibraryPanel() {
   )
 
   return (
-    <StudioPanel ref={panelRef} className="h-full w-72 shrink-0 border-r border-[var(--studio-panel-border)]">
+    <StudioPanel ref={panelRef} className="h-full w-studio-library shrink-0 border-r border-[var(--studio-surface-border)]">
       <StudioPanelHeader
         title="Library"
         actions={
@@ -224,7 +211,7 @@ export function LibraryPanel() {
                   </StudioPanelIconButton>
                 </Tooltip>
                 <Tooltip content="Clear selection">
-                  <StudioPanelIconButton onClick={clearSelection} aria-label="Clear selection" className="hover:text-gray-800">
+                  <StudioPanelIconButton onClick={clearSelection} aria-label="Clear selection">
                     <MdDeselect className="h-4 w-4" />
                   </StudioPanelIconButton>
                 </Tooltip>

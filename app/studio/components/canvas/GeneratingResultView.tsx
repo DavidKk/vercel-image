@@ -26,10 +26,10 @@ export function GeneratingResultView(props: GeneratingResultViewProps) {
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-6">
-      <div className="flex max-w-sm flex-col items-center gap-4 rounded-xl border border-gray-200 bg-white px-8 py-10 shadow-sm">
-        <Spinner className="h-7 w-7" color="text-gray-400" />
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Loading</p>
-        <p className="text-center text-sm font-medium text-gray-800 break-all">{name}</p>
+      <div className="flex max-w-sm flex-col items-center gap-4 rounded-studio-lg border border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] px-8 py-10 shadow-studio-sm">
+        <Spinner className="h-7 w-7" color="text-[var(--studio-surface-fg-subtle)]" />
+        <p className="text-xs font-semibold uppercase tracking-widest text-[var(--studio-surface-fg-subtle)]">Loading</p>
+        <p className="break-all text-center text-sm font-medium text-[var(--studio-surface-fg)]">{name}</p>
         <InlineProgressBar label={statusLabel} progress={progress} indeterminate={indeterminate} layout="stack" size="md" align="start" className="w-full" />
       </div>
     </div>

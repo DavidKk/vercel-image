@@ -130,7 +130,7 @@ export function Popover(props: PopoverProps) {
             ref={popoverRef}
             role="dialog"
             aria-modal="false"
-            className="z-[9998] max-w-[min(calc(100vw-24px),16rem)] rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-xs text-gray-700 shadow-lg"
+            className="z-[9998] max-w-[min(calc(100vw-24px),16rem)] rounded-studio-md border border-[var(--studio-surface-border,#e4e4e7)] bg-[var(--studio-surface-bg,#ffffff)] px-3 py-2.5 text-xs text-[var(--studio-surface-fg,#18181b)] shadow-studio-pop"
             style={style}
             onMouseEnter={show}
             onMouseLeave={scheduleHide}

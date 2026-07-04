@@ -17,6 +17,10 @@ interface NotificationViewportProps {
   onClose: (id: string) => void
 }
 
+/** Dismiss button shared across notification card variants */
+const DISMISS_BUTTON_CLASS =
+  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-studio-md text-[var(--studio-surface-fg-subtle,#a1a1aa)] transition-colors hover:bg-[var(--studio-surface-muted,#fafafa)] hover:text-[var(--studio-surface-fg,#18181b)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--studio-accent-ring,rgb(20_184_166/0.25))]'
+
 /** Visual config per notification type */
 const TYPE_STYLES: Record<NotificationType, { border: string; icon: string; iconClass: string }> = {
   success: {
@@ -30,9 +34,9 @@ const TYPE_STYLES: Record<NotificationType, { border: string; icon: string; icon
     iconClass: 'bg-red-50',
   },
   info: {
-    border: 'border-blue-200',
-    icon: 'text-blue-600',
-    iconClass: 'bg-blue-50',
+    border: 'border-teal-200',
+    icon: 'text-teal-600',
+    iconClass: 'bg-teal-50',
   },
   warn: {
     border: 'border-amber-200',
@@ -40,11 +44,15 @@ const TYPE_STYLES: Record<NotificationType, { border: string; icon: string; icon
     iconClass: 'bg-amber-50',
   },
   loading: {
-    border: 'border-[var(--studio-panel-border)]',
-    icon: 'text-blue-600',
-    iconClass: 'bg-blue-50',
+    border: 'border-[var(--studio-surface-border)]',
+    icon: 'text-[var(--studio-accent)]',
+    iconClass: 'bg-[var(--studio-accent-muted)]',
   },
 }
+
+/** Shared card shell classes */
+const CARD_SHELL_CLASS =
+  'notification-enter pointer-events-auto flex w-full max-w-sm items-center rounded-studio-lg border bg-[var(--studio-surface-bg,#ffffff)]/95 shadow-studio-pop backdrop-blur-sm'
 
 /**
  * Render the notification type icon
@@ -78,22 +86,12 @@ function NotificationCard(props: { item: NotificationItem; onClose: (id: string)
 
   if (item.type === 'loading') {
     return (
-      <div
-        role="status"
-        className={`notification-enter pointer-events-auto flex w-full max-w-sm items-center gap-2 rounded-lg border bg-white/95 px-2.5 py-1.5 shadow-lg backdrop-blur-sm ${styles.border} ${
-          item.closing ? 'notification--closing' : ''
-        }`}
-      >
+      <div role="status" className={`${CARD_SHELL_CLASS} gap-2 px-2.5 py-1.5 ${styles.border} ${item.closing ? 'notification--closing' : ''}`}>
         <div className="min-w-0 flex-1">
           <InlineProgressBar label={item.message} progress={item.indeterminate ? undefined : item.progress} indeterminate={item.indeterminate ?? item.progress == null} size="sm" />
         </div>
 
-        <button
-          type="button"
-          onClick={() => onClose(item.id)}
-          aria-label="Dismiss"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-        >
+        <button type="button" onClick={() => onClose(item.id)} aria-label="Dismiss" className={DISMISS_BUTTON_CLASS}>
           <FiX className="h-4 w-4" aria-hidden />
         </button>
       </div>
@@ -101,26 +99,16 @@ function NotificationCard(props: { item: NotificationItem; onClose: (id: string)
   }
 
   return (
-    <div
-      role="status"
-      className={`notification-enter pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-lg border bg-white/95 px-3 py-2.5 shadow-lg backdrop-blur-sm ${styles.border} ${
-        item.closing ? 'notification--closing' : ''
-      }`}
-    >
-      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${styles.iconClass}`}>
+    <div role="status" className={`${CARD_SHELL_CLASS} gap-3 px-3 py-2.5 ${styles.border} ${item.closing ? 'notification--closing' : ''}`}>
+      <span className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-studio-md ${styles.iconClass}`}>
         <NotificationIcon type={item.type} />
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-snug text-gray-800">{item.message}</p>
+        <p className="text-sm leading-snug text-[var(--studio-surface-fg,#18181b)]">{item.message}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={() => onClose(item.id)}
-        aria-label="Dismiss"
-        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
-      >
+      <button type="button" onClick={() => onClose(item.id)} aria-label="Dismiss" className={DISMISS_BUTTON_CLASS}>
         <FiX className="h-4 w-4" aria-hidden />
       </button>
     </div>

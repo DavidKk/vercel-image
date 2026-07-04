@@ -1,8 +1,7 @@
 /**
- * Route prefixes that should hide global Nav
- * If the current path starts with these prefixes, Nav will not be displayed
+ * Route prefixes that should hide global Nav (these pages provide their own chrome)
  */
-export const HIDDEN_ROUTES: string[] = []
+export const HIDDEN_ROUTES: string[] = ['/studio', '/mosaic/editor']
 
 export const DEFAULT_NAV = {
   $tools: [

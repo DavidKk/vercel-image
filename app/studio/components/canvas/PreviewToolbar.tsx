@@ -49,7 +49,9 @@ export function PreviewToolbar() {
                   aria-label={tab.tooltip}
                   aria-pressed={isActive}
                   className={`inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                    isActive ? 'bg-blue-600/90 text-white shadow-sm' : 'text-gray-600 hover:bg-white/60 hover:text-gray-900'
+                    isActive
+                      ? 'bg-[var(--studio-accent)] text-[var(--studio-accent-fg)] shadow-studio-sm'
+                      : 'text-[var(--studio-surface-fg-muted)] hover:bg-[var(--studio-surface-muted)] hover:text-[var(--studio-surface-fg)]'
                   }`}
                 >
                   <tab.Icon className="h-4 w-4" />

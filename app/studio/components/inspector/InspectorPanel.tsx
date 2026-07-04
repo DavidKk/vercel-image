@@ -5,7 +5,7 @@
  */
 import { FiRotateCcw } from 'react-icons/fi'
 
-import { STUDIO_BUTTON_HEIGHT_CLASS, STUDIO_BUTTON_ICON_CLASS, STUDIO_BUTTON_TEXT_CLASS } from '@/components/form-styles'
+import { STUDIO_BUTTON_HEIGHT_CLASS, STUDIO_BUTTON_ICON_CLASS, STUDIO_BUTTON_PRIMARY_CLASS } from '@/components/form-styles'
 import { PanelEmptyState } from '@/components/PanelEmptyState'
 import { Tooltip } from '@/components/Tooltip'
 
@@ -20,11 +20,11 @@ import { OperationPanel } from './operations'
 const INSPECTOR_ICON_BUTTON_CLASS = [
   STUDIO_BUTTON_HEIGHT_CLASS,
   STUDIO_BUTTON_ICON_CLASS,
-  'w-10 border border-[var(--studio-panel-border)] bg-white text-gray-600 hover:bg-gray-50 hover:text-gray-900',
+  'w-10 border border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] text-[var(--studio-surface-fg-muted)] hover:bg-[var(--studio-surface-muted)] hover:text-[var(--studio-surface-fg)]',
 ].join(' ')
 
 /** Primary submit button for inspector footer */
-const INSPECTOR_SUBMIT_BUTTON_CLASS = [STUDIO_BUTTON_HEIGHT_CLASS, STUDIO_BUTTON_TEXT_CLASS, 'w-full flex-1 px-5 bg-indigo-600 text-white hover:bg-indigo-700'].join(' ')
+const INSPECTOR_SUBMIT_BUTTON_CLASS = [STUDIO_BUTTON_PRIMARY_CLASS, 'w-full flex-1 px-5'].join(' ')
 
 /**
  * Studio inspector panel (Zone D)
@@ -38,7 +38,7 @@ export function InspectorPanel() {
   const showReset = action.canReset && Boolean(action.reset)
 
   return (
-    <StudioPanel className="relative h-full w-80 shrink-0 border-l border-[var(--studio-panel-border)]">
+    <StudioPanel className="relative h-full w-studio-inspector shrink-0 border-l border-[var(--studio-surface-border)]">
       <StudioPanelHeader title={activeLabel} />
 
       <StudioPanelBody className="min-h-0 overflow-hidden p-0">
@@ -53,7 +53,7 @@ export function InspectorPanel() {
 
       <InspectorProgressModule />
 
-      <div className="flex w-full shrink-0 gap-2 bg-white p-3">
+      <div className="flex w-full shrink-0 gap-2 bg-[var(--studio-surface-bg)] p-3">
         {showReset ? (
           <Tooltip content={action.resetTooltip} placement="top" wrapperClassName="shrink-0">
             <button

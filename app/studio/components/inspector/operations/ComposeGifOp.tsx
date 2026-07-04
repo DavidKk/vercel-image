@@ -18,7 +18,7 @@ export function ComposeGifOp() {
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">Select frame images (sorted by timestamp metadata)</p>
+      <p className="text-xs text-[var(--studio-surface-fg-muted)]">Select frame images (sorted by timestamp metadata)</p>
 
       <FormField id="gif-interval" label={`Frame interval: ${gifSettings.intervalMs}ms`}>
         <Slider
@@ -38,7 +38,7 @@ export function ComposeGifOp() {
         onChange={(loop) => setGifSettings({ ...gifSettings, loop })}
         disabled={isBusy}
         label="Loop animation"
-        className="text-xs text-gray-700"
+        className="text-xs text-[var(--studio-surface-fg)]"
       />
     </div>
   )

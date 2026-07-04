@@ -37,7 +37,7 @@ export function ExtractFramesOp() {
     <div className="space-y-3">
       {!videoAsset && <p className="text-xs text-amber-600">Select a video asset to extract frames</p>}
       {videoAsset && source && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--studio-surface-fg-muted)]">
           {videoAsset.name} · {formatTimeMs(durationToMs(source.duration))}
         </p>
       )}
@@ -57,10 +57,10 @@ export function ExtractFramesOp() {
         </FormField>
       </div>
 
-      <p className="text-[10px] text-gray-400">Negative values count from the end (e.g. -10000 = last 10 seconds)</p>
+      <p className="text-[10px] text-[var(--studio-surface-fg-subtle)]">Negative values count from the end (e.g. -10000 = last 10 seconds)</p>
 
       {resolvedRange && (
-        <p className="text-xs text-indigo-600">
+        <p className="text-xs text-[var(--studio-accent)]">
           Range: {formatTimeMs(resolvedRange.start)} → {formatTimeMs(resolvedRange.end)} · ~{estimated} frames
         </p>
       )}

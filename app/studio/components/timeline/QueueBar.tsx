@@ -39,10 +39,10 @@ export function QueueBar() {
   }, [])
 
   return (
-    <footer className="flex shrink-0 flex-col border-t border-[var(--studio-panel-border)] bg-white">
+    <footer className="flex shrink-0 flex-col border-t border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)]">
       {showTimeline && (
-        <div className="flex h-20 items-center gap-2 overflow-hidden border-b border-gray-100 px-3 py-2">
-          <span className="w-14 shrink-0 text-[10px] font-medium uppercase tracking-wide text-gray-400">Timeline</span>
+        <div className="flex h-20 items-center gap-2 overflow-hidden border-b border-[var(--studio-surface-border)] px-3 py-2">
+          <span className="w-14 shrink-0 text-[10px] font-medium uppercase tracking-wide text-[var(--studio-surface-fg-subtle)]">Timeline</span>
           <div ref={stripRef} className="flex flex-1 gap-1.5 overflow-x-auto pb-1">
             {frameAssets
               .sort((a, b) => ((a.meta?.timestampMs as number) ?? 0) - ((b.meta?.timestampMs as number) ?? 0))
@@ -61,7 +61,7 @@ export function QueueBar() {
         </div>
       )}
 
-      <div className="flex min-h-9 shrink-0 items-center px-3 py-1.5 text-xs text-gray-500">
+      <div className="flex min-h-9 shrink-0 items-center px-3 py-1.5 text-xs text-[var(--studio-surface-fg-muted)]">
         {assets.length} assets
         {multiSelectMode ? ` · ${selectedIds.length} selected` : ''}
       </div>
@@ -90,10 +90,10 @@ function FrameThumb(props: FrameThumbProps) {
     <button
       type="button"
       onClick={onSelect}
-      className={`flex shrink-0 flex-col items-center gap-0.5 rounded border-2 transition-colors ${isSelected ? 'border-indigo-500' : 'border-transparent hover:border-gray-300'}`}
+      className={`flex shrink-0 flex-col items-center gap-0.5 rounded border-2 transition-colors ${isSelected ? 'border-[var(--studio-accent)]' : 'border-transparent hover:border-[var(--studio-surface-border)]'}`}
     >
       <canvas ref={canvasRef} className="h-14 w-14 rounded" />
-      <span className="text-[9px] text-gray-400">{timestampMs}ms</span>
+      <span className="text-[9px] text-[var(--studio-surface-fg-subtle)]">{timestampMs}ms</span>
     </button>
   )
 }

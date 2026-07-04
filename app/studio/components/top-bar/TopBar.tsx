@@ -11,6 +11,7 @@ import packageJson from '@/package.json'
 
 import { useStudio } from '../../context/StudioContext'
 import type { StudioViewMode } from '../../hooks/studio-types'
+import { StudioSegmentedControl } from '../primitives/StudioSegmentedControl'
 
 /** View mode buttons */
 const VIEW_MODES: { value: StudioViewMode; label: string }[] = [
@@ -42,30 +43,27 @@ export function TopBar() {
   }, [assets.length, confirm, removeAll])
 
   return (
-    <header className="flex h-11 shrink-0 items-center gap-3 border-b border-[var(--studio-chrome-border)] bg-[var(--studio-chrome)] px-3 text-zinc-100">
+    <header className="flex h-11 shrink-0 items-center gap-3 border-b border-[var(--studio-chrome-border)] bg-[var(--studio-chrome-bg)] px-3 text-[var(--studio-chrome-fg)] shadow-studio-sm">
       <div className="flex min-w-0 items-center gap-2.5 border-r border-[var(--studio-chrome-border)] pr-3">
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-500 text-[10px] font-bold text-white" aria-hidden>
+        <div
+          className="flex h-6 w-6 shrink-0 items-center justify-center rounded-studio-md bg-[var(--studio-accent)] text-[10px] font-bold text-[var(--studio-accent-fg)]"
+          aria-hidden
+        >
           S
         </div>
         <span className="truncate text-sm font-semibold tracking-tight">Studio</span>
       </div>
 
       <div className="flex flex-1 justify-center">
-        <div className="flex items-center gap-0.5 rounded-md bg-zinc-900 p-0.5 ring-1 ring-zinc-800">
-          {VIEW_MODES.map((mode) => (
-            <button
-              key={mode.value}
-              type="button"
-              onClick={() => setViewMode(mode.value)}
-              disabled={mode.value === 'compare' && !canCompare}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors disabled:opacity-40 ${
-                viewMode === mode.value ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200'
-              }`}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
+        <StudioSegmentedControl
+          aria-label="Preview view mode"
+          value={viewMode}
+          onChange={setViewMode}
+          options={VIEW_MODES.map((mode) => ({
+            ...mode,
+            disabled: mode.value === 'compare' && !canCompare,
+          }))}
+        />
       </div>
 
       <div className="flex shrink-0 items-center gap-2 border-l border-[var(--studio-chrome-border)] pl-3">
@@ -73,7 +71,7 @@ export function TopBar() {
           type="button"
           onClick={() => void handleClearAll()}
           disabled={isBusy || assets.length === 0}
-          className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 transition-colors hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 disabled:opacity-40"
+          className="rounded-studio-md border border-[var(--studio-chrome-border)] px-3 py-1 text-xs text-[var(--studio-chrome-fg-muted)] transition-colors hover:border-[var(--studio-chrome-segment-active)] hover:bg-[var(--studio-chrome-hover)] hover:text-[var(--studio-chrome-fg)] disabled:opacity-40"
         >
           Clear
         </button>
@@ -82,7 +80,7 @@ export function TopBar() {
             href={GITHUB_URL}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-studio-md text-[var(--studio-chrome-fg-muted)] transition-colors hover:bg-[var(--studio-chrome-hover)] hover:text-[var(--studio-chrome-fg)]"
             aria-label="GitHub repository"
           >
             <FiGithub className="h-4 w-4" />

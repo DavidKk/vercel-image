@@ -35,7 +35,8 @@ function StudioLayout() {
 
   return (
     <div
-      className="relative flex h-screen flex-col overflow-hidden bg-[var(--studio-workspace)]"
+      data-studio-theme="pro"
+      className="studio-root relative flex h-full min-h-0 flex-col overflow-hidden bg-[var(--studio-workspace-bg)]"
       onDrop={(event) => void handleDrop(event)}
       onDragOver={(event) => {
         if (!event.dataTransfer.types.includes('Files')) return
@@ -48,8 +49,10 @@ function StudioLayout() {
       }}
     >
       {isDragging && (
-        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center border-2 border-dashed border-blue-400 bg-blue-50/70">
-          <span className="rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-blue-700 shadow-sm">Drop images or videos to import</span>
+        <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center border-2 border-dashed border-[var(--studio-accent)] bg-[var(--studio-accent-muted)]">
+          <span className="rounded-full bg-[var(--studio-surface-bg)]/90 px-4 py-2 text-sm font-medium text-[var(--studio-accent-hover)] shadow-studio-sm">
+            Drop images or videos to import
+          </span>
         </div>
       )}
 

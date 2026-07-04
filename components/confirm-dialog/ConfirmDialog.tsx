@@ -6,7 +6,7 @@
 import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-import { STUDIO_BUTTON_HEIGHT_CLASS, STUDIO_BUTTON_TEXT_CLASS } from '@/components/form-styles'
+import { STUDIO_BUTTON_HEIGHT_CLASS, STUDIO_BUTTON_PRIMARY_CLASS, STUDIO_BUTTON_SECONDARY_CLASS, STUDIO_BUTTON_TEXT_CLASS } from '@/components/form-styles'
 
 import type { ConfirmOptions } from './types'
 
@@ -48,7 +48,9 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
   const title = options.title ?? 'Confirm'
   const confirmLabel = options.confirmLabel ?? 'Confirm'
   const cancelLabel = options.cancelLabel ?? 'Cancel'
-  const confirmClass = options.destructive ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-indigo-600 text-white hover:bg-indigo-700'
+  const confirmButtonClass = options.destructive
+    ? `${STUDIO_BUTTON_HEIGHT_CLASS} ${STUDIO_BUTTON_TEXT_CLASS} px-3 bg-[var(--studio-danger)] text-[var(--studio-danger-fg)] hover:opacity-90`
+    : `${STUDIO_BUTTON_PRIMARY_CLASS} px-3`
 
   return createPortal(
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4">
@@ -58,23 +60,19 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-message"
-        className="relative w-full max-w-sm rounded-lg border border-[var(--studio-panel-border)] bg-white p-4 shadow-xl"
+        className="relative w-full max-w-sm rounded-studio-lg border border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] p-4 shadow-studio-pop"
       >
-        <h2 id="confirm-dialog-title" className="text-sm font-semibold text-gray-900">
+        <h2 id="confirm-dialog-title" className="text-sm font-semibold text-[var(--studio-surface-fg)]">
           {title}
         </h2>
-        <p id="confirm-dialog-message" className="mt-2 text-sm leading-snug text-gray-600">
+        <p id="confirm-dialog-message" className="mt-2 text-sm leading-snug text-[var(--studio-surface-fg-muted)]">
           {options.message}
         </p>
         <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            className={`${STUDIO_BUTTON_TEXT_CLASS} ${STUDIO_BUTTON_HEIGHT_CLASS} border border-gray-300 bg-white px-3 text-gray-700 hover:bg-gray-50`}
-          >
+          <button type="button" onClick={onCancel} className={`${STUDIO_BUTTON_SECONDARY_CLASS} px-3`}>
             {cancelLabel}
           </button>
-          <button ref={confirmRef} type="button" onClick={onConfirm} className={`${STUDIO_BUTTON_TEXT_CLASS} ${STUDIO_BUTTON_HEIGHT_CLASS} px-3 ${confirmClass}`}>
+          <button ref={confirmRef} type="button" onClick={onConfirm} className={confirmButtonClass}>
             {confirmLabel}
           </button>
         </div>

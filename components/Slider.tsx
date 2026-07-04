@@ -195,9 +195,9 @@ export function Slider(props: SliderProps) {
   const rootClass = [STUDIO_SLIDER_CLASS, disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer', dragging ? 'cursor-grabbing' : '', className].filter(Boolean).join(' ')
 
   const thumbClass = [
-    'absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-600 shadow-sm transition-transform',
+    'absolute top-1/2 h-3.5 w-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[var(--studio-accent)] shadow-sm transition-transform',
     disabled ? '' : dragging ? 'scale-110' : 'hover:scale-105',
-    focused ? 'ring-2 ring-blue-500/30' : '',
+    focused ? 'ring-2 ring-[var(--studio-accent-ring)]' : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -225,8 +225,8 @@ export function Slider(props: SliderProps) {
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
       >
-        <div className="pointer-events-none absolute inset-x-0 h-1.5 rounded-full bg-zinc-200" aria-hidden />
-        <div className="pointer-events-none absolute left-0 h-1.5 rounded-full bg-blue-600" style={{ width: `${percent}%` }} aria-hidden />
+        <div className="pointer-events-none absolute inset-x-0 h-1.5 rounded-full bg-[var(--studio-surface-subtle)]" aria-hidden />
+        <div className="pointer-events-none absolute left-0 h-1.5 rounded-full bg-[var(--studio-accent)]" style={{ width: `${percent}%` }} aria-hidden />
         <div className={thumbClass} style={{ left: `${percent}%` }} aria-hidden />
       </div>
     </div>

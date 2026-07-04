@@ -1,9 +1,12 @@
 import './globals.css'
+import './studio/theme/studio-tokens.css'
 
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
+
+import { Nav } from '@/app/Nav'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -31,7 +34,10 @@ export default function RootLayout(props: Readonly<RootLayoutProps>) {
     <html lang="en">
       <Analytics />
       <SpeedInsights />
-      <body className={`${geistSans.variable} ${geistMono.variable} h-screen overflow-hidden antialiased`}>{children}</body>
+      <body className={`${geistSans.variable} ${geistMono.variable} flex h-screen flex-col overflow-hidden antialiased`}>
+        <Nav />
+        <div className="min-h-0 flex-1 overflow-auto">{children}</div>
+      </body>
     </html>
   )
 }

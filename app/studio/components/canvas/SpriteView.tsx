@@ -36,21 +36,13 @@ export function SpriteView(props: SpriteViewProps) {
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-6">
-      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-4 max-w-full max-h-full flex flex-col items-center gap-3">
-        <div
-          className="relative rounded-lg overflow-hidden border border-gray-100 max-w-full"
-          style={{
-            backgroundImage:
-              'linear-gradient(45deg, #f0f0f0 25%, transparent 25%), linear-gradient(-45deg, #f0f0f0 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f0f0f0 75%), linear-gradient(-45deg, transparent 75%, #f0f0f0 75%)',
-            backgroundSize: '16px 16px',
-            backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
-          }}
-        >
-          <img src={url} alt="Sprite sheet" className="max-w-full max-h-[calc(100vh-280px)] object-contain block" />
+      <div className="flex max-w-full max-h-full flex-col items-center gap-3 rounded-studio-lg border border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] p-4 shadow-studio-md">
+        <div className="relative max-w-full overflow-hidden rounded-studio-md border border-[var(--studio-surface-border)] studio-checkerboard">
+          <img src={url} alt="Sprite sheet" className="block max-h-[calc(100vh-280px)] max-w-full object-contain" />
         </div>
-        <div className="text-center space-y-1">
-          <p className="text-sm font-semibold text-gray-800">Sprite Preview</p>
-          <p className="text-xs text-gray-500">
+        <div className="space-y-1 text-center">
+          <p className="text-sm font-semibold text-[var(--studio-surface-fg)]">Sprite Preview</p>
+          <p className="text-xs text-[var(--studio-surface-fg-muted)]">
             {asset.width}×{asset.height} · {frameCount} frames · {columns} columns
           </p>
         </div>

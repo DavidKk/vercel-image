@@ -35,8 +35,10 @@ export function Checkbox(props: CheckboxProps) {
       <input id={id} type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} disabled={disabled} className="peer sr-only" />
       <span
         aria-hidden
-        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-500 ${
-          checked ? 'border-blue-600 bg-blue-600 text-white' : 'border-gray-300 bg-white text-transparent group-hover:border-gray-400'
+        className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded border transition-colors peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--studio-accent)] ${
+          checked
+            ? 'border-[var(--studio-accent)] bg-[var(--studio-accent)] text-[var(--studio-accent-fg)]'
+            : 'border-[var(--studio-surface-border)] bg-[var(--studio-surface-bg)] text-transparent group-hover:border-[var(--studio-surface-fg-subtle)]'
         }`}
       >
         <FiCheck className="h-3 w-3" strokeWidth={3} />

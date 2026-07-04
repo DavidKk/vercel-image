@@ -1,0 +1,80 @@
+/**
+ * Studio design tokens
+ * Defined on :root so portaled UI (Select menu, dialogs, tooltips) can resolve CSS variables on body.
+ * Accent: teal · Inspector: 360px · Light canvas only (no full dark theme)
+ */
+
+:root,
+[data-studio-theme='pro'] {
+  /* Layer 1: Chrome (TopBar, global Nav) — slightly off-white to separate from surface panels */
+  --studio-chrome-bg: #fafafa;
+  --studio-chrome-fg: #18181b;
+  --studio-chrome-fg-muted: #71717a;
+  --studio-chrome-border: #e4e4e7;
+  --studio-chrome-hover: #f4f4f5;
+  --studio-chrome-segment-bg: #f4f4f5;
+  --studio-chrome-segment-active: #e4e4e7;
+
+  /* Layer 2: Surface (Library, Inspector, QueueBar panels) */
+  --studio-surface-bg: #ffffff;
+  --studio-surface-muted: #fafafa;
+  --studio-surface-subtle: #f4f4f5;
+  --studio-surface-border: #e4e4e7;
+  --studio-surface-fg: #18181b;
+  --studio-surface-fg-muted: #71717a;
+  --studio-surface-fg-subtle: #a1a1aa;
+
+  /* Layer 3: Workspace (gaps between panels) */
+  --studio-workspace-bg: #ececee;
+
+  /* Layer 4: Canvas (preview area) */
+  --studio-canvas-bg: #ffffff;
+  --studio-canvas-checker-a: #ffffff;
+  --studio-canvas-checker-b: #e8e8ec;
+
+  /* Accent — teal */
+  --studio-accent: #14b8a6;
+  --studio-accent-hover: #0d9488;
+  --studio-accent-muted: rgb(20 184 166 / 0.12);
+  --studio-accent-fg: #ffffff;
+  --studio-accent-ring: rgb(20 184 166 / 0.25);
+
+  /* Status */
+  --studio-success: #22c55e;
+  --studio-success-muted: #f0fdf4;
+  --studio-success-fg: #15803d;
+  --studio-warning: #f59e0b;
+  --studio-danger: #ef4444;
+  --studio-danger-muted: rgb(239 68 68 / 0.1);
+  --studio-danger-fg: #ffffff;
+
+  /* Elevation */
+  --studio-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05);
+  --studio-shadow-md: 0 4px 12px rgb(0 0 0 / 0.08);
+  --studio-shadow-pop: 0 8px 24px rgb(0 0 0 / 0.12);
+
+  /* Radius */
+  --studio-radius-sm: 4px;
+  --studio-radius-md: 6px;
+  --studio-radius-lg: 8px;
+
+  /* Layout */
+  --studio-inspector-width: 360px;
+  --studio-library-width: 288px;
+
+  /* Motion */
+  --studio-duration-fast: 120ms;
+  --studio-duration-normal: 200ms;
+  --studio-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Legacy aliases (migration) */
+  --studio-chrome: var(--studio-chrome-bg);
+  --studio-chrome-muted: var(--studio-chrome-fg-muted);
+  --studio-workspace: var(--studio-workspace-bg);
+  --studio-panel-border: var(--studio-surface-border);
+}
+
+[data-studio-theme='pro'].studio-root {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}

@@ -177,7 +177,11 @@ export function Select(props: SelectProps) {
   }, [open])
 
   const rootClass = ['relative w-full', className].filter(Boolean).join(' ')
-  const triggerClass = [STUDIO_SELECT_TRIGGER_CLASS, 'flex items-center justify-between gap-2 text-left', open ? 'border-blue-500 ring-2 ring-blue-500/20' : '']
+  const triggerClass = [
+    STUDIO_SELECT_TRIGGER_CLASS,
+    'flex items-center justify-between gap-2 text-left',
+    open ? 'border-[var(--studio-accent)] ring-2 ring-[var(--studio-accent-ring)]' : '',
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -196,7 +200,7 @@ export function Select(props: SelectProps) {
         className={triggerClass}
       >
         <span className="truncate">{selectedOption?.label ?? placeholder}</span>
-        <FiChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
+        <FiChevronDown className={`h-4 w-4 shrink-0 text-[var(--studio-surface-fg-subtle)] transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
 
       {open && typeof document !== 'undefined'
@@ -212,7 +216,7 @@ export function Select(props: SelectProps) {
                 width: position.width,
                 maxHeight: SELECT_MENU_MAX_HEIGHT,
               }}
-              className={`fixed z-[10001] ${STUDIO_SELECT_MENU_CLASS}`}
+              className={`fixed z-[10001] overflow-hidden ${STUDIO_SELECT_MENU_CLASS}`}
             >
               {options.map((option, index) => {
                 const isSelected = option.value === value
@@ -226,11 +230,15 @@ export function Select(props: SelectProps) {
                     onMouseEnter={() => setHighlightIndex(index)}
                     onClick={() => selectOption(option)}
                     className={`flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-sm transition-colors ${
-                      isSelected ? 'bg-blue-50 text-blue-700' : isHighlighted ? 'bg-gray-50 text-gray-900' : 'text-gray-800 hover:bg-gray-50'
+                      isSelected
+                        ? 'bg-[var(--studio-accent-muted)] text-[var(--studio-accent-hover)]'
+                        : isHighlighted
+                          ? 'bg-[var(--studio-surface-muted)] text-[var(--studio-surface-fg)]'
+                          : 'text-[var(--studio-surface-fg)] hover:bg-[var(--studio-surface-muted)]'
                     }`}
                   >
                     <span className="truncate">{option.label}</span>
-                    {isSelected ? <FiCheck className="h-4 w-4 shrink-0 text-blue-600" aria-hidden /> : null}
+                    {isSelected ? <FiCheck className="h-4 w-4 shrink-0 text-[var(--studio-accent)]" aria-hidden /> : null}
                   </button>
                 )
               })}

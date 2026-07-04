@@ -35,14 +35,14 @@ export function PanelEmptyState(props: PanelEmptyStateProps) {
       <div className="max-w-[16rem] text-center">
         {loading ? (
           <div className="flex flex-col items-center gap-2">
-            <Spinner className="h-6 w-6" color="text-gray-400" />
-            <p className="text-sm leading-snug text-gray-500">{message}</p>
+            <Spinner className="h-6 w-6" color="text-[var(--studio-surface-fg-subtle)]" />
+            <p className="text-sm leading-snug text-[var(--studio-surface-fg-muted)]">{message}</p>
           </div>
         ) : (
           <>
-            {title ? <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400">{title}</p> : null}
-            <p className={`text-sm leading-snug text-gray-500 ${title ? 'mt-1' : ''} ${messageClassName ?? ''}`}>{message}</p>
-            {hint ? <p className="mt-1.5 text-xs leading-snug text-gray-400">{hint}</p> : null}
+            {title ? <p className="text-[11px] font-medium uppercase tracking-wide text-[var(--studio-surface-fg-subtle)]">{title}</p> : null}
+            <p className={`text-sm leading-snug text-[var(--studio-surface-fg-muted)] ${title ? 'mt-1' : ''} ${messageClassName ?? ''}`}>{message}</p>
+            {hint ? <p className="mt-1.5 text-xs leading-snug text-[var(--studio-surface-fg-subtle)]">{hint}</p> : null}
           </>
         )}
       </div>

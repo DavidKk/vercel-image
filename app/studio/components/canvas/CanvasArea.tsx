@@ -35,8 +35,8 @@ export function CanvasArea() {
   const emptyMessage = getPreviewEmptyMessage(loading, allAssets.length, selectedIds.length)
 
   return (
-    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--studio-workspace)]">
-      <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[var(--studio-workspace-bg)]">
+      <main className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--studio-canvas-bg)]">
         {viewMode === 'detail' && primarySelected ? (
           <DetailView asset={primarySelected} />
         ) : viewMode === 'compare' && primarySelected && parentAsset ? (
