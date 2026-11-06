@@ -1,6 +1,12 @@
-onlyBuiltDependencies:
-  - '@vercel/speed-insights'
-  - canvas
-  - core-js
-  - protobufjs
-  - sharp
+# pnpm 12: dependency build scripts must be explicitly reviewed.
+# Unreviewed scripts fail install with ERR_PNPM_IGNORED_BUILDS.
+# `packages` is required when Vercel falls back to older pnpm.
+packages:
+  - '.'
+
+allowBuilds:
+  '@vercel/speed-insights': true
+  canvas: true
+  core-js: true
+  protobufjs: true
+  sharp: true
