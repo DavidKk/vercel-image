@@ -44,7 +44,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "ahooks": "^3.11.0",
     "codemirror": "^6.0.2",
-    "cookie": "^1.0.2",
+    "cookie": "^2.0.2",
     "dexie": "^4.4.7",
     "fflate": "^0.8.3",
     "gifenc": "^1.0.3",
